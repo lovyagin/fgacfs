@@ -6,12 +6,12 @@
   See the file COPYING.
 */
 
+#include <config.h>
 #include "fgacfsctl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pwd.h>
-#define __USE_MISC
 #include <grp.h>
 #include <fcntl.h>
 #include <sys/stat.h>

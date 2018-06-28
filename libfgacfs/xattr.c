@@ -6,6 +6,7 @@
   See the file COPYING.
 */
 
+#include <config.h>
 #include "fgacfs.h"
 #include "xattr.h"
 #include <sys/xattr.h>

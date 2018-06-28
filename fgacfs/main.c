@@ -9,6 +9,7 @@
   Copyright (C) 2012 Joseph J. Pfeiffer, Jr., Ph.D. <pfeiffer@cs.nmsu.edu>
 */
 
+#include <config.h>
 #include "fgacops.h"
 
 const char * const fgacprg_errlist[] =
@@ -27,8 +28,6 @@ const char * const fgacprg_msglist[] =
 #define FGACFS_MSG_NOCMD   (FGAC_PRG |  3)
 
 #define FGACFS_ERR_NOMOUNT   (FGAC_PRG | FGAC_ERR | 0)
-
-#define VERSION "1.0.0"
 
 char fgac_prg_name[FGAC_LIMIT_PATH];
 

@@ -6,6 +6,7 @@
   See the file COPYING.
 */
 
+#include <config.h>
 #include <stdarg.h>
 #include <stdio.h>
 

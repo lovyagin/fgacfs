@@ -6,6 +6,7 @@
   See the file COPYING.
 */
 
+#include <config.h>
 #include <fgacfs.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -29,8 +30,6 @@ const char * const fgacprg_msglist[] =
 };
 
 char fgac_prg_name[FGAC_LIMIT_PATH];
-
-#define VERSION "1.0.0"
 
 #define USAGE { fgac_put_msg(FGACFSCTL_MSG_USAGE, fgac_prg_name); fgac_close(&state); return 1; }
 

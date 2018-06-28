@@ -1,6 +1,7 @@
 # Autoconf
 AC_PREREQ(2.59)
 AC_INIT([fgacfs],[2018.06.01],[lovyagin@mail.com])
+AC_CONFIG_HEADER([include/config.h])
 LIBFGACFS_VERSION="1"
 AC_CONFIG_SRCDIR([fgacfs/fgacops.c])
 AC_CONFIG_AUX_DIR([build-aux])
