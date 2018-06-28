@@ -104,8 +104,6 @@ PKG_PROG_PKG_CONFIG
 AC_ARG_VAR([LDCONFIG], [ldconfig utility])
 AC_PATH_PROG([LDCONFIG], [ldconfig], [true], [/sbin /usr/sbin $PATH])
 
-AC_PATH_PROG([MV], [mv])
-AC_PATH_PROG([RM], [rm])
 AC_PATH_PROG([CHMOD], [chmod])
 
 if test "${enable_ldscript}" = "yes"; then
