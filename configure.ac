@@ -118,37 +118,14 @@ if test "${enable_ldscript}" = "yes"; then
 	fi
 fi
 
-# Fuse
-if test -z "$PKG_CONFIG"; then
-	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-fi
-test "x${PKG_CONFIG}" = "xno" && AC_MSG_ERROR([pkg-config was not found])
-PKG_CHECK_MODULES(
-	[FUSE_MODULE],
-	[fuse >= 2.8.0],
-	,
-	[
-		AC_MSG_ERROR([FUSE >= 2.8.0 was not found])
-	]
-)
-FUSE_MODULE_LIBS=`$PKG_CONFIG --libs fuse`
-
-# Sqlite 
-PKG_CHECK_MODULES(
-	[SQLITE3_MODULE],
-	[sqlite3 >= 3.0.0],
-	,
-	[
-		AC_MSG_ERROR([sqlite >= 3.0 was not found])
-	]
-)
-SQLITE3_MODULE_LIBS=`$PKG_CONFIG --libs sqlite3`
+PKG_CHECK_MODULES([FUSE_MODULE], [fuse >= 2.8.0])
+PKG_CHECK_MODULES([SQLITE3_MODULE], [sqlite3 >= 3.0.0])
 
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_MAJOR
-AC_CHECK_HEADERS([attr/xattr.h byteswap.h db.h dirent.h errno.h fcntl.h fuse.h grp.h \
-inttypes.h libgen.h libkern/OSByteOrder.h limits.h machine/bswap.h memory.h pwd.h sqlite3.h \
+AC_CHECK_HEADERS([attr/xattr.h byteswap.h db.h dirent.h errno.h fcntl.h grp.h \
+inttypes.h libgen.h libkern/OSByteOrder.h limits.h machine/bswap.h memory.h pwd.h \
 stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/byteorder.h sys/endian.h \
 sys/stat.h sys/statvfs.h sys/time.h sys/types.h sys/xattr.h unistd.h utime.h])
 
