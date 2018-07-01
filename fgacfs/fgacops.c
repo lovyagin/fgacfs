@@ -15,7 +15,6 @@
 #include <errno.h>
 #include <dirent.h>
 #include <sys/time.h>
-#include <attr/xattr.h>
 #include <stdio.h>
 
 #define FGACFS_INIT                                                                      \

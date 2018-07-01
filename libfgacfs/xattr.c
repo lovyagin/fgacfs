@@ -15,7 +15,10 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <attr/xattr.h>
+
+#ifndef ENOATTR
+#define ENOATTR ENODATA
+#endif
 
 int xattr_close (fgac_state *state)
 {

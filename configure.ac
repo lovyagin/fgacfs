@@ -124,7 +124,7 @@ PKG_CHECK_MODULES([SQLITE3_MODULE], [sqlite3 >= 3.0.0])
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_MAJOR
-AC_CHECK_HEADERS([attr/xattr.h byteswap.h db.h dirent.h errno.h fcntl.h grp.h \
+AC_CHECK_HEADERS([byteswap.h db.h dirent.h errno.h fcntl.h grp.h \
 inttypes.h libgen.h libkern/OSByteOrder.h limits.h machine/bswap.h memory.h pwd.h \
 stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/byteorder.h sys/endian.h \
 sys/stat.h sys/statvfs.h sys/time.h sys/types.h sys/xattr.h unistd.h utime.h])
