@@ -1,5 +1,5 @@
 # Autoconf
-AC_PREREQ(2.59)
+AC_PREREQ(2.60)
 AC_INIT([fgacfs],[2018.06.01],[lovyagin@mail.com])
 AC_CONFIG_HEADER([include/config.h])
 LIBFGACFS_VERSION="1"
@@ -12,7 +12,7 @@ AC_CANONICAL_TARGET
 AC_CONFIG_MACRO_DIR([m4])
 
 # Automake
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.14])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE
 
@@ -182,17 +182,6 @@ AM_CONDITIONAL([ENABLE_FGACFS], [test "${enable_fgacfs}" = "yes"])
 AM_CONDITIONAL([ENABLE_FGACFSPROGS], [test "${enable_fgacfsprogs}" = "yes"])
 AM_CONDITIONAL([RUN_LDCONFIG], [test "${enable_ldconfig}" = "yes"])
 AM_CONDITIONAL([GENERATE_LDSCRIPT], [test "${generate_ldscript}" = "yes"])
-
-# workaround for <autoconf-2.60
-if test -z "${docdir}"; then
-	docdir="\$(datarootdir)/doc/\$(PACKAGE_NAME)"
-	AC_SUBST([docdir])
-fi
-# workaround for <automake-1.10
-if test -z "${MKDIR_P}"; then
-	MKDIR_P="\$(mkdir_p)"
-	AC_SUBST([MKDIR_P])
-fi
 
 # generate files
 AC_CONFIG_FILES([
