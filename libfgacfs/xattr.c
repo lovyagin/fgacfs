@@ -62,7 +62,7 @@ uint64_t CityHash64(const char *s);
 
 int xattr_open (fgac_state *state)
 {
-     char value[5];
+     char value[6];
      if (lgetxattr(state->datadir, "user.fgacfs", value, 6) != 6 ||
          memcmp(value, "xattr", 6)
         )
