@@ -6,12 +6,12 @@
   See the file COPYING.
 */
 
+#include <config.h>
 #include "fgacfs.h"
 #include "fxattr.h"
 #include <sys/xattr.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <attr/xattr.h>
 #include <string.h>
 
 #include "bswap.h"
@@ -21,6 +21,9 @@
 #define uint64_convert_order(x)
 #endif
 
+#ifndef ENOATTR
+#define ENOATTR ENODATA
+#endif
 
 int fxattr_open (fgac_state *state)
 {

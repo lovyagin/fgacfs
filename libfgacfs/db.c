@@ -6,6 +6,7 @@
   See the file COPYING.
 */
 
+#include <config.h>
 #include "fgacfs.h"
 #include "db.h"
 #include <sqlite3.h>

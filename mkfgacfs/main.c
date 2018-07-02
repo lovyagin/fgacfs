@@ -6,10 +6,9 @@
   See the file COPYING.
 */
 
+#include <config.h>
 #include <fgacfs.h>
 #include <string.h>
-
-#define VERSION "1.0.0"
 
 #define FGACMK_MSG_USAGE   (FGAC_PRG |  0)
 #define FGACMK_MSG_HELP    (FGAC_PRG |  1)

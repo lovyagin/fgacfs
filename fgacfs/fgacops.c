@@ -8,13 +8,13 @@
   This code is based on bbfs fuse-tutorial code
   Copyright (C) 2012 Joseph J. Pfeiffer, Jr., Ph.D. <pfeiffer@cs.nmsu.edu>
 */
+#include <config.h>
 #include "fgacops.h"
 #include <fgacfs.h>
 #include <stdio.h>
 #include <errno.h>
 #include <dirent.h>
 #include <sys/time.h>
-#include <attr/xattr.h>
 #include <stdio.h>
 
 #define FGACFS_INIT                                                                      \

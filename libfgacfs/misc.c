@@ -6,6 +6,7 @@
   See the file COPYING.
 */
 
+#include <config.h>
 #include <string.h>
 #include <stdlib.h>
 #include "fgacfs.h"

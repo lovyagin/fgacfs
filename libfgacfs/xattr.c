@@ -6,6 +6,7 @@
   See the file COPYING.
 */
 
+#include <config.h>
 #include "fgacfs.h"
 #include "xattr.h"
 #include <sys/xattr.h>
@@ -14,7 +15,10 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <attr/xattr.h>
+
+#ifndef ENOATTR
+#define ENOATTR ENODATA
+#endif
 
 int xattr_close (fgac_state *state)
 {
@@ -58,7 +62,7 @@ uint64_t CityHash64(const char *s);
 
 int xattr_open (fgac_state *state)
 {
-     char value[5];
+     char value[6];
      if (lgetxattr(state->datadir, "user.fgacfs", value, 6) != 6 ||
          memcmp(value, "xattr", 6)
         )

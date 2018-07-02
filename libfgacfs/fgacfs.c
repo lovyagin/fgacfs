@@ -6,9 +6,7 @@
   See the file COPYING.
 */
 
-#define _XOPEN_SOURCE 500
-
-
+#include <config.h>
 #include "fgacfs.h"
 #include "xattr.h"
 #include "fxattr.h"

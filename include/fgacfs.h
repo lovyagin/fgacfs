@@ -18,7 +18,6 @@
 #ifndef FGACFS_H_INCLUDED
 #define FGACFS_H_INCLUDED
 
-#define _XOPEN_SOURCE 500
 #include <sys/stat.h>
 
 #include <sqlite3.h>

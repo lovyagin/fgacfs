@@ -1,16 +1,19 @@
 # Autoconf
-AC_PREREQ(2.59)
+AC_PREREQ(2.60)
 AC_INIT([fgacfs],[2018.06.01],[lovyagin@mail.com])
+AC_CONFIG_HEADER([include/config.h])
 LIBFGACFS_VERSION="1"
 AC_CONFIG_SRCDIR([fgacfs/fgacops.c])
+AC_CONFIG_AUX_DIR([build-aux])
 
 # Environment
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
+AC_CONFIG_MACRO_DIR([m4])
 
 # Automake
-AM_INIT_AUTOMAKE([${PACKAGE_NAME}], [${PACKAGE_VERSION}])
-AC_CONFIG_MACRO_DIR([m4])
+AM_INIT_AUTOMAKE([1.14])
+AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE
 
 # Options
@@ -102,8 +105,6 @@ PKG_PROG_PKG_CONFIG
 AC_ARG_VAR([LDCONFIG], [ldconfig utility])
 AC_PATH_PROG([LDCONFIG], [ldconfig], [true], [/sbin /usr/sbin $PATH])
 
-AC_PATH_PROG([MV], [mv])
-AC_PATH_PROG([RM], [rm])
 AC_PATH_PROG([CHMOD], [chmod])
 
 if test "${enable_ldscript}" = "yes"; then
@@ -117,37 +118,14 @@ if test "${enable_ldscript}" = "yes"; then
 	fi
 fi
 
-# Fuse
-if test -z "$PKG_CONFIG"; then
-	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-fi
-test "x${PKG_CONFIG}" = "xno" && AC_MSG_ERROR([pkg-config was not found])
-PKG_CHECK_MODULES(
-	[FUSE_MODULE],
-	[fuse >= 2.8.0],
-	,
-	[
-		AC_MSG_ERROR([FUSE >= 2.8.0 was not found])
-	]
-)
-FUSE_MODULE_LIBS=`$PKG_CONFIG --libs fuse`
-
-# Sqlite 
-PKG_CHECK_MODULES(
-	[SQLITE3_MODULE],
-	[sqlite3 >= 3.0.0],
-	,
-	[
-		AC_MSG_ERROR([sqlite >= 3.0 was not found])
-	]
-)
-SQLITE3_MODULE_LIBS=`$PKG_CONFIG --libs sqlite3`
+PKG_CHECK_MODULES([FUSE_MODULE], [fuse >= 2.8.0])
+PKG_CHECK_MODULES([SQLITE3_MODULE], [sqlite3 >= 3.0.0])
 
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_MAJOR
-AC_CHECK_HEADERS([attr/xattr.h byteswap.h db.h dirent.h errno.h fcntl.h fuse.h grp.h \
-inttypes.h libgen.h libkern/OSByteOrder.h limits.h machine/bswap.h memory.h pwd.h sqlite3.h \
+AC_CHECK_HEADERS([byteswap.h db.h dirent.h errno.h fcntl.h grp.h \
+inttypes.h libgen.h libkern/OSByteOrder.h limits.h machine/bswap.h memory.h pwd.h \
 stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/byteorder.h sys/endian.h \
 sys/stat.h sys/statvfs.h sys/time.h sys/types.h sys/xattr.h unistd.h utime.h])
 
@@ -204,17 +182,6 @@ AM_CONDITIONAL([ENABLE_FGACFS], [test "${enable_fgacfs}" = "yes"])
 AM_CONDITIONAL([ENABLE_FGACFSPROGS], [test "${enable_fgacfsprogs}" = "yes"])
 AM_CONDITIONAL([RUN_LDCONFIG], [test "${enable_ldconfig}" = "yes"])
 AM_CONDITIONAL([GENERATE_LDSCRIPT], [test "${generate_ldscript}" = "yes"])
-
-# workaround for <autoconf-2.60
-if test -z "${docdir}"; then
-	docdir="\$(datarootdir)/doc/\$(PACKAGE_NAME)"
-	AC_SUBST([docdir])
-fi
-# workaround for <automake-1.10
-if test -z "${MKDIR_P}"; then
-	MKDIR_P="\$(mkdir_p)"
-	AC_SUBST([MKDIR_P])
-fi
 
 # generate files
 AC_CONFIG_FILES([
