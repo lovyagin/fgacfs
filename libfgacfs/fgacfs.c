@@ -323,6 +323,8 @@ void fgac_get_entry_ad (fgac_state *state, fgac_path *path, const fgac_prc *prc,
     const gid_t *i = prc->groups, *e = i + prc->ngroups;
     uid_t uid;
     gid_t gid;
+    
+    int b = 0;
 /*
     if (prc->uid == 0 || prc->uid == state->uid)
     {
@@ -334,13 +336,14 @@ void fgac_get_entry_ad (fgac_state *state, fgac_path *path, const fgac_prc *prc,
     *allow = *deny = 0;
 
     p.cat = FGAC_CAT_ALL; FGAC_APC
-    if (prc->uid != (uid_t) -1) { p.cat = FGAC_CAT_UID; p.prc.uid = prc->uid; FGAC_APC }
-    if (prc->gid != (gid_t) -1) { p.cat = FGAC_CAT_GID; p.prc.gid = prc->gid; FGAC_APC }
+    if (prc->uid != (uid_t) -1) { b = 1; p.cat = FGAC_CAT_UID; p.prc.uid = prc->uid; FGAC_APC }
+    if (prc->gid != (gid_t) -1) { b = 1; p.cat = FGAC_CAT_GID; p.prc.gid = prc->gid; FGAC_APC }
 
     for ( ; i < e; ++i)
     {
         p.prc.gid = *i;
         FGAC_APC
+        b = 1;
     }
 
     if (state->check_prexec && prc->cmd != NULL)
@@ -356,7 +359,7 @@ void fgac_get_entry_ad (fgac_state *state, fgac_path *path, const fgac_prc *prc,
     {
         p.cat = FGAC_CAT_OGR; FGAC_APC
     }
-    else
+    else if (b)
     {
         p.cat = FGAC_CAT_OTH; FGAC_APC
     }
