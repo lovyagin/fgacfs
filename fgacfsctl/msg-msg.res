@@ -66,7 +66,7 @@
     "\tFRP\t(R) read file permissions (FGACFS)\n"
     "\tFXA\t(R) read file extended attributes (getattr)\n"
     "\tFSL\t(R) read (follow) symlink\n"
-    "\tFWR\t(W) rite to file (modify)\n"
+    "\tFWR\t(W) write to file (modify)\n"
     "\tFCA\t(W) change attributes (utime)\n"
     "\tFCP\t(W) chmod (change permission) file\n"
     "\tFCI\t(W) change permission inheritance of the file\n"

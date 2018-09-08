@@ -228,7 +228,8 @@ int db_delete (fgac_state *state, fgac_path *path)
 int db_rename (fgac_state *state, fgac_path *path, const char* newfgac_path)
 {
     sqlite3_stmt *stmt; int rc;
-    sqlite3_prepare_v2(state->db, "UPDATE entry SET fgac_path = ?1 WHERE fgac_path = ?2", -1, &stmt, NULL);
+
+    sqlite3_prepare_v2(state->db, "UPDATE entry SET path = ?2 WHERE path = ?1", -1, &stmt, NULL);
 
     sqlite3_bind_text(stmt, 1, FGAC_PATH, -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, newfgac_path, -1, SQLITE_STATIC);
@@ -240,8 +241,8 @@ int db_rename (fgac_state *state, fgac_path *path, const char* newfgac_path)
 
     sqlite3_prepare_v2(state->db, 
                        "UPDATE entry "
-                       "SET fgac_path = ?2 + '/' + substr(fgac_path, length(?1)) "
-                       "WHERE fgac_path LIKE ?2+'%'", 
+                       "SET path = ?2 || '/' || substr(path, length(?1)+2) "
+                       "WHERE path LIKE ?1||'/%'", 
                        -1, &stmt, NULL
                       );
 

@@ -393,7 +393,7 @@ int fgac_check_inh_prm (fgac_state *state, fgac_path *path, const fgac_prc *prc,
         if (!go_fprm) prm &= ~FGAC_PRM_FILE;
         if (!go_dprm) prm &= ~FGAC_PRM_DIRS;
 
-        if ((q = fgac_check_entry_prm(state, oldpath, prc, prm)) == -1) return 0;
+        if ((q = fgac_check_entry_prm(state, curpath, prc, prm)) == -1) return 0;
         r = r || q;
 
         go_dprm = go_dprm && fgac_check_inh (state, curpath, FGAC_INH_INH);
@@ -405,7 +405,7 @@ int fgac_check_inh_prm (fgac_state *state, fgac_path *path, const fgac_prc *prc,
     return r;
 }
 
-int fgac_check_inh_prms (fgac_state *state, fgac_path *path, const fgac_prc *prc)
+uint64_t fgac_check_inh_prms (fgac_state *state, fgac_path *path, const fgac_prc *prc)
 {
     int go_fprm, go_dprm;
 
@@ -464,13 +464,23 @@ int fgac_check_dex (fgac_state *state, fgac_path *path, const fgac_prc *prc)
 
     if (prc->uid == 0 || prc->uid == state->uid) return 1;
 
-    if (!fgac_str_cpy(fgac_get_path(curpath), FGAC_PATH, FGAC_LIMIT_PATH)) return 0;
+    if (!fgac_str_cpy(fgac_get_path(oldpath), FGAC_PATH, FGAC_LIMIT_PATH)) return 0;
 
-    do
+    while (fgac_parent(oldpath, curpath))
     {
+#ifndef NDEBUG            
+        printf("!checking DEX: '%s'\n", curpath->path);
+#endif            
+
+     
         if (!fgac_check_inh_prm (state, curpath, prc, FGAC_PRM_DEX)) return 0;
         swappath(&oldpath, &curpath);
-    }  while (fgac_parent(oldpath, curpath));
+    }
+
+#ifndef NDEBUG            
+        printf("PATH DEX OK: '%s'\n", path->path);
+#endif            
+
 
     return 1;
 }

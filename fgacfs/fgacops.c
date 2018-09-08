@@ -8,6 +8,7 @@
   This code is based on bbfs fuse-tutorial code
   Copyright (C) 2012 Joseph J. Pfeiffer, Jr., Ph.D. <pfeiffer@cs.nmsu.edu>
 */
+#include <libgen.h>
 #include <config.h>
 #include "fgacops.h"
 #include <fgacfs.h>
@@ -284,6 +285,11 @@ int fgacfs_add(const char  *rpath,
     if (S_ISREG(stat->st_mode))
     {
         int fd;
+        
+#ifndef NDEBUG
+        printf("pprm %llX DMK %llX DAF %llX DMK %llX\n", pprm, pprm & FGAC_PRM_DMK, pprm & FGAC_PRM_DAF, FGAC_PRM_DMK);
+#endif        
+        
         CHECK_OWN(MK,AF)
 
         if (!source)
@@ -334,7 +340,7 @@ int fgacfs_add(const char  *rpath,
         CHECK_OWN(MD,AD)
         if (!source) FGACFS_FAILCALL(mkdir(hostpath, hostmode));
         ADD_DIR
-        ADD_ORD_PRM(F)
+        ADD_ORD_PRM(D)
         CHOWNMOD
     }
     else if (S_ISLNK(stat->st_mode))
@@ -407,7 +413,9 @@ int fgacfs_rename (const char *rpath, const char *newrpath)
 {
     struct stat *stat;
     fgac_path fgacnewpath = fgac_path_init((char *) newrpath), *newpath = &fgacnewpath;
-    char newpbuffer[FGAC_LIMIT_PATH];
+    char newpbuffer[FGAC_LIMIT_PATH], 
+         name[FGAC_LIMIT_PATH], newname[FGAC_LIMIT_PATH],
+         dirn[FGAC_LIMIT_PATH], newdirn[FGAC_LIMIT_PATH];
     fgac_path fgacnewparent = fgac_path_init(newpbuffer), *newparent = &fgacnewparent;
     char *newhostpath;
     FGACFS_INIT_PARENT
@@ -416,10 +424,21 @@ int fgacfs_rename (const char *rpath, const char *newrpath)
     if (!fgac_parent(path, newparent)) parent = NULL;
     if (!fgac_is_dir(state, newparent)) return -ENOTDIR;
     newhostpath = fgac_get_hostpath(state, newpath);
-
-    if (!strcmp(fgac_get_hostpath(state,parent), fgac_get_hostpath(state,newparent)))
+    
+    if (rpath[strlen(rpath) - 1] == '/' || newrpath[strlen(newrpath) - 1] == '/') return FGAC_ERR_PATH;
+    if (!fgac_str_cpy (name, rpath, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
+    if (!fgac_str_cpy (newname, newrpath, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
+    
+    if (strcmp(basename(name), basename(newname)))
     {
         FGACFS_PRM2(MV);
+    } 
+    if (!fgac_str_cpy (dirn, rpath, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
+    if (!fgac_str_cpy (newdirn, newrpath, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
+    
+    if (!strcmp(dirname(dirn), dirname(newdirn)))
+/*    if (!strcmp(fgac_get_hostpath(state,parent), fgac_get_hostpath(state,newparent))) */
+    {
 
         FGACFS_FAILCALL(rename(hostpath, newhostpath))
         if (fgac_rename (state, path, newrpath))
@@ -430,24 +449,21 @@ int fgacfs_rename (const char *rpath, const char *newrpath)
 
         return 0;
     }
+    
+    FGACFS_PRM2(RM);
 
     stat = fgac_stat(state, path, prc);
 
-    FGACFS_FAILCALL(fgacfs_add(newrpath, stat, path, NULL))
+    if ((rc = fgacfs_add(newrpath, stat, path, NULL)) < 0) return rc;
 
     if (rename(hostpath, newhostpath) < 0)
     {
         fgac_delete(state, newpath);
         return -EACCES;
     }
-    if (fgac_rename (state, path, newrpath))
-    {
-        rename(newhostpath, hostpath);
-        fgac_delete(state, newpath);
-        return -EACCES;
-    }
-
+    
     fgac_delete(state, path);
+    fgac_rename(state, path, newrpath);
     return 0;
 }
 
@@ -680,7 +696,7 @@ int fgacfs_open (const char *rpath, struct fuse_file_info *fi)
     FGACFS_FAILCALL(open(hostpath, fi->flags))
     
     fi->fh        = rc;
-    fi->direct_io = 1;    
+    fi->direct_io = 0;    
     return 0;
 }
 
