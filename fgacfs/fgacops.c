@@ -414,7 +414,6 @@ int fgacfs_rename (const char *rpath, const char *newrpath)
     struct stat *stat;
     fgac_path fgacnewpath = fgac_path_init((char *) newrpath), *newpath = &fgacnewpath;
     char newpbuffer[FGAC_LIMIT_PATH], 
-         name[FGAC_LIMIT_PATH], newname[FGAC_LIMIT_PATH],
          dirn[FGAC_LIMIT_PATH], newdirn[FGAC_LIMIT_PATH];
     fgac_path fgacnewparent = fgac_path_init(newpbuffer), *newparent = &fgacnewparent;
     char *newhostpath;
@@ -426,20 +425,15 @@ int fgacfs_rename (const char *rpath, const char *newrpath)
     newhostpath = fgac_get_hostpath(state, newpath);
     
     if (rpath[strlen(rpath) - 1] == '/' || newrpath[strlen(newrpath) - 1] == '/') return FGAC_ERR_PATH;
-    if (!fgac_str_cpy (name, rpath, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
-    if (!fgac_str_cpy (newname, newrpath, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
-    
-    if (strcmp(basename(name), basename(newname)))
-    {
-        FGACFS_PRM2(MV);
-    } 
+
     if (!fgac_str_cpy (dirn, rpath, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
     if (!fgac_str_cpy (newdirn, newrpath, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
     
-    if (!strcmp(dirname(dirn), dirname(newdirn)))
+    if (!strcmp(dirname(dirn), dirname(newdirn)) && fgac_check_prm2(state, path, prc, FGAC_PRM_FMV, FGAC_PRM_DMV))
 /*    if (!strcmp(fgac_get_hostpath(state,parent), fgac_get_hostpath(state,newparent))) */
     {
 
+        FGACFS_PRM2(MV);
         FGACFS_FAILCALL(rename(hostpath, newhostpath))
         if (fgac_rename (state, path, newrpath))
         {
