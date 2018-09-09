@@ -682,8 +682,8 @@ int fgacfs_open (const char *rpath, struct fuse_file_info *fi)
     FGACFS_INIT
     FGACFS_EXISTS
 
-    if (fi->flags & O_RDONLY || fi->flags & O_RDWR) FGACFS_PRM(FRD);
-    if (fi->flags & O_WRONLY || fi->flags & O_RDWR) FGACFS_PRM(FWR);
+    if (fi->flags & O_RDONLY || fi->flags & O_RDWR || !(fi->flags & O_WRONLY)) FGACFS_PRM(FRD);
+    if (fi->flags & O_WRONLY || fi->flags & O_RDWR || !(fi->flags & O_RDONLY)) FGACFS_PRM(FWR);
 
     FGACFS_HOSTPATH
 
