@@ -55,11 +55,11 @@ int main(int argc, char *argv[] )
             uid = getuid();
             gid = getgid();
 
-            if ((rc = fgac_create(argv[1], t)))             { fgac_put_msg(rc); return 2; }
+            if ((rc = fgac_create(argv[1], t)))                { fgac_put_msg(rc); return 2; }
 
-            if ((rc = fgac_open (argv[1], 0, &state, 0)))   { fgac_put_msg(rc); return 2; }
+            if ((rc = fgac_open (argv[1], 0, 0, &state, 0)))   { fgac_put_msg(rc); return 2; }
 
-            if ((rc = fgac_add(state, &path, uid, gid)))    { fgac_put_msg(rc); return 2; }
+            if ((rc = fgac_add(state, &path, uid, gid)))       { fgac_put_msg(rc); return 2; }
 
             fgac_close (&state);
 

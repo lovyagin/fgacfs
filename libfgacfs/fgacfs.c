@@ -41,7 +41,7 @@ void fgac_init (const char *name, const char *version)
     fgac_str_cpy(fgac_prg_version, version, FGAC_LIMIT_PATH);
 }
 
-int fgac_open   (const char *hostdir, int check_prexec, fgac_state **state, size_t cache_size)
+int fgac_open   (const char *hostdir, int check_prexec, int dio, fgac_state **state, size_t cache_size)
 {
     struct stat statbuf;
     
@@ -76,6 +76,7 @@ int fgac_open   (const char *hostdir, int check_prexec, fgac_state **state, size
     (**state).cache = cache_size ? cache_init (cache_size) : NULL;
     
     (**state).check_prexec = check_prexec;
+    (**state).dio          = dio;
     
     (**state).fd_lock = -1;
     (**state).fd_fifo = -1;
@@ -515,7 +516,7 @@ int fgac_adjust_mode_inh (fgac_state *state, fgac_path *path, const fgac_prc *pr
              r, w, x,
              prm;
 
-    if (!fgac_exists(state, path) || !fgac_check_dex(state, path, prc))
+    if (!fgac_exists(state, path)/* || !fgac_check_dex(state, path, prc)*/)
     {
         switch (ugo)
         {

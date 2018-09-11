@@ -690,7 +690,7 @@ int fgacfs_open (const char *rpath, struct fuse_file_info *fi)
     FGACFS_FAILCALL(open(hostpath, fi->flags))
     
     fi->fh        = rc;
-    fi->direct_io = 0;    
+    fi->direct_io = state->dio;    
     return 0;
 }
 

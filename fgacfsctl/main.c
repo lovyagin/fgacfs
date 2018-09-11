@@ -84,8 +84,8 @@ int main(int argc, char *argv[] )
 
     if (geteuid() != 0 && geteuid() != statbuf.st_uid) {fgac_put_msg(FGACFSCTL_ERR_SETUID); return 3;}
 
-    if ((rc = fgac_open(argv[1], 1, &state, 0))) {fgac_put_msg(rc); return 2;}
-    if ((rc = fgac_attach(state, mountpoint)))   {fgac_put_msg(rc); return 2;}
+    if ((rc = fgac_open(argv[1], 1, 0, &state, 0))) {fgac_put_msg(rc); return 2;}
+    if ((rc = fgac_attach(state, mountpoint)))      {fgac_put_msg(rc); return 2;}
 
     argc -= 2;
     argv += 2;

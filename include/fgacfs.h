@@ -185,6 +185,8 @@ struct cache;
 *         Field 'fd_lock' store FGACFS mount lock fd
 * @var    fd_fifo::fd_fifo
 *         Field 'fd_fifo' store FGACFS IPC fifo read end fd
+* @var    dio::dio
+*         Field 'dio' set to 1 if direct_io user, 0 otherwise
 */
 typedef struct
 {
@@ -200,6 +202,7 @@ typedef struct
     int           fd_fifo;
     char          buffer[FGAC_LIMIT_PATH];
     size_t        bpos;
+    int           dio;
 } fgac_state;
 
 /** permission category **/
@@ -302,12 +305,13 @@ void fgac_init (const char *name, const char *version);
 * @brief      open existing fgacfs system for operating
 * @param[in]  hostdir path to host directory
 * @param[in]  check_prexec should be non-zero if executable process permission checking required, 0 otherwise
+* @param[in]  dio should be non-zero if direct_io is required
 * @param[in]  cache_size cache size (number of entries), uncached if 0
 * @param[out] state   pointer to pointer to a newly allocated fgacfs handler or to NULL on fail
 * @return     FGAC_OK (0) on success
 *             fgacfs error code on fail
 */
-int fgac_open   (const char *hostdir, int check_prexec, fgac_state **state, size_t cache_size);
+int fgac_open   (const char *hostdir, int check_prexec, int dio, fgac_state **state, size_t cache_size);
 
 /**
 * @brief         close fgacfs

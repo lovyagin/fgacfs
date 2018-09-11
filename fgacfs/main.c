@@ -10,6 +10,7 @@
 */
 
 #include <config.h>
+#include <stdio.h>
 #include "fgacops.h"
 
 const char * const fgacprg_errlist[] =
@@ -42,23 +43,30 @@ int str_to_int (const char *str, unsigned long *value)
 
 #define USAGE { fgac_put_msg(FGACFS_MSG_USAGE, fgac_prg_name); return 1; }
 
-#define OPARSE                             \
-        if (!strcmp(p, "nocmd"))           \
-            cmd = 0;                       \
-        else if (!strcmp(p, "cache"))      \
-            csize = 10240;                 \
-        else                               \
-        {                                  \
-            char *e = strchr(p, '=');      \
-            if (!e) USAGE                  \
-            *e = '\0';                     \
-            if (strcmp(p,"cache")) USAGE   \
-            char *v = e+1;                 \
-            unsigned long i;               \
-            if (!str_to_int (v, &i)) USAGE \
-            csize = i;                     \
-        }                                  \
-
+#define OPARSE                                      \
+        if (!strcmp(p, "nocmd"))         cmd = 0;   \
+        else if (!strcmp(p, "direct_io")) dio = 1;  \
+        else if (!strcmp(p, "ro"))      oro   = 1;  \
+        else if (!strcmp(p, "rw"))      oro   = 0;  \
+        else if (!strcmp(p, "suid"))    osuid = 1;  \
+        else if (!strcmp(p, "nosuid"))  osuid = 0;  \
+        else if (!strcmp(p, "dev"))     odev  = 1;  \
+        else if (!strcmp(p, "nodev"))   odev  = 0;  \
+        else if (!strcmp(p, "exec"))    oexec = 1;  \
+        else if (!strcmp(p, "noexec"))  oexec = 0;  \
+        else if (!strcmp(p, "atime"))   oatime = 1; \
+        else if (!strcmp(p, "noatime")) oatime = 0; \
+        else                                        \
+        {                                           \
+            char *e = strchr(p, '=');               \
+            if (!e) USAGE                           \
+            *e = '\0';                              \
+            if (strcmp(p, "cache")) USAGE           \
+            char *v = e+1;                          \
+            unsigned long i;                        \
+            if (!str_to_int (v, &i)) USAGE          \
+            csize = i;                              \
+        }                                           
 
 #define OPT_PARSE(str)                     \
     char *p = str, *o;                     \
@@ -77,16 +85,14 @@ int main(int argc, char *argv[])
 
     struct fuse_operations *fgacfs_ops = calloc (sizeof (struct fuse_operations), 1);
 
-    char *fuse_args[
-#ifndef NDEBUG
-7
-#else
-5
-#endif
-], *hostdir, *mountdir;
+    char *fuse_args[50], *hostdir, *mountdir;
 
     fgac_state *state;
-
+    
+    int oro=0, osuid=0, odev=1, oexec=1, oatime=1, dio=0;
+    char oplist[FGAC_LIMIT_PATH];
+    
+    
     int rc, cmd = 1;
     size_t csize = 4096;
 
@@ -128,12 +134,20 @@ int main(int argc, char *argv[])
     fuse_args[0] = argv[0];
     fuse_args[1] = "-s";
     fuse_args[2] = "-o";
-    fuse_args[3] = "allow_other,auto_unmount,hard_remove";
+    fuse_args[3] = oplist;
 #ifndef NDEBUG
     fuse_args[5] = "-d";
     fuse_args[6] = "-f";
 #endif // NDEBUG
 
+    if(snprintf(oplist, FGAC_LIMIT_PATH, "allow_other,auto_unmount,hard_remove,%s,%s,%s,%s,%s,fsname=%s",
+                oro     ? "ro"     : "rw",
+                osuid   ? "suid"   : "nosuid", 
+                odev    ? "dev"    : "nodev",
+                oexec   ? "exec"   : "noexec",
+                oatime  ? "atime"  : "noatime",
+                hostdir
+               )  >= FGAC_LIMIT_PATH) {fgac_put_msg(FGAC_ERR_PATH); return 5;}
     
     if (!mountdir) 
     {
@@ -147,8 +161,8 @@ int main(int argc, char *argv[])
         fgac_put_msg(FGACFS_MSG_NOCMD, argv[0]);
     }
 
-    if ((rc = fgac_open(hostdir, cmd, &state, csize))) {fgac_put_msg(rc); return 2;}
-    if ((rc = fgac_mount(state, mountdir)))            {fgac_put_msg(rc); return 2;}
+    if ((rc = fgac_open(hostdir, cmd, dio, &state, csize))) {fgac_put_msg(rc); return 2;}
+    if ((rc = fgac_mount(state, mountdir)))                 {fgac_put_msg(rc); return 2;}
 
     if (!fgacfs_ops)
     {
