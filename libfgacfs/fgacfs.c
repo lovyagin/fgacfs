@@ -41,7 +41,7 @@ void fgac_init (const char *name, const char *version)
     fgac_str_cpy(fgac_prg_version, version, FGAC_LIMIT_PATH);
 }
 
-int fgac_open   (const char *hostdir, int check_prexec, int dio, fgac_state **state, size_t cache_size)
+int fgac_open   (const char *hostdir, int check_prexec, int dio, fgac_state **state, size_t cache_size, int stat_cache)
 {
     struct stat statbuf;
     
@@ -73,7 +73,7 @@ int fgac_open   (const char *hostdir, int check_prexec, int dio, fgac_state **st
     if (db_open(*state)) { return FGAC_ERR_DBOPEN; }
     if (!(**state).db && fxattr_open(*state) && xattr_open(*state)) return FGAC_ERR_XATTROPEN;
     
-    (**state).cache = cache_size ? cache_init (cache_size) : NULL;
+    (**state).cache = cache_size ? cache_init (cache_size, stat_cache) : NULL;
     
     (**state).check_prexec = check_prexec;
     (**state).dio          = dio;
@@ -460,8 +460,11 @@ int fgac_check_dex (fgac_state *state, fgac_path *path, const fgac_prc *prc)
     char buffer1 [FGAC_LIMIT_PATH], buffer2 [FGAC_LIMIT_PATH];
     fgac_path path1 = fgac_path_init(buffer1), path2 = fgac_path_init(buffer2),
               *oldpath = &path1, *curpath = &path2;
+    int dex;
 
     if (!fgac_exists(state, path)) return 0;
+    
+    if (cache_get_dex(state, path, prc, &dex)) return dex;
 
     if (prc->uid == 0 || prc->uid == state->uid) return 1;
 
@@ -473,8 +476,16 @@ int fgac_check_dex (fgac_state *state, fgac_path *path, const fgac_prc *prc)
         printf("!checking DEX: '%s'\n", curpath->path);
 #endif            
 
+        if (!cache_get_dex(state, path, prc, &dex)) dex = fgac_check_inh_prm (state, curpath, prc, FGAC_PRM_DEX);
      
-        if (!fgac_check_inh_prm (state, curpath, prc, FGAC_PRM_DEX)) return 0;
+        if (dex) 
+            cache_set_dex(state, curpath, prc, 1);
+        else
+        {
+            cache_set_dex(state, curpath, prc, 0);
+            return 0;
+        }
+        
         swappath(&oldpath, &curpath);
     }
 
@@ -482,6 +493,7 @@ int fgac_check_dex (fgac_state *state, fgac_path *path, const fgac_prc *prc)
         printf("PATH DEX OK: '%s'\n", path->path);
 #endif            
 
+    cache_set_dex(state, path, prc, 1);
 
     return 1;
 }
@@ -573,6 +585,13 @@ int fgac_adjust_mode (fgac_state *state, fgac_path *path, const fgac_prc *prc)
     int rc;
 
     fgac_prc uprc, gprc, oprc;
+    mode_t mode;
+    
+    if (cache_get_mode(state, path, prc, &mode))
+    {
+        path->statbuf.st_mode = mode;
+        return 0;
+    }
 
     if (path->statbuf.st_uid == prc->uid)
     {
@@ -652,6 +671,9 @@ int fgac_adjust_mode (fgac_state *state, fgac_path *path, const fgac_prc *prc)
             if (S_ISDIR(path->statbuf.st_mode)) path->statbuf.st_mode |= S_IXOTH;
         }
     }
+    
+    cache_set_mode(state, path, prc, path->statbuf.st_mode);
+
 
     return 0;
 
@@ -696,7 +718,7 @@ int fgac_set_prm (fgac_state *state, fgac_path *path, const fgac_prm *prm)
         default:          return FGAC_ERR_TYPE;
     }
     
-    if (!rc) cache_set_prm(state, path, prm);
+    if (!rc) { cache_set_prm(state, path, prm); cache_stat_cleanup(state, path->path); }
     return rc;
 }
 
@@ -729,7 +751,7 @@ int fgac_unset_prm (fgac_state *state, fgac_path *path, fgac_prm *prm)
         default:          return FGAC_ERR_TYPE;
     }
     
-    if (!rc) cache_unset_prm(state, path, prm);
+    if (!rc) { cache_unset_prm(state, path, prm); cache_stat_cleanup(state, path->path); }
     return rc;
 }
 
@@ -771,7 +793,7 @@ int fgac_set_inh (fgac_state *state, fgac_path *path, uint64_t inh)
         default:          return FGAC_ERR_TYPE;
     }
     
-    if (!rc) cache_set_inh(state, path, inh);
+    if (!rc) { cache_set_inh(state, path, inh); cache_stat_cleanup(state, path->path); }
     return rc;
 }
 
@@ -813,7 +835,7 @@ int fgac_set_owner (fgac_state *state, fgac_path *path, uid_t uid)
         default:          return FGAC_ERR_TYPE;
     }
     
-    if (!rc) cache_set_owner(state, path, uid);
+    if (!rc) { cache_set_owner(state, path, uid); cache_stat_cleanup(state, path->path); }
     return rc;
 }
 
@@ -856,7 +878,7 @@ int fgac_set_group (fgac_state *state, fgac_path *path, gid_t gid)
         default:          return FGAC_ERR_TYPE;
     }
     
-    if (!rc) cache_set_group(state, path, gid);
+    if (!rc) { cache_set_group(state, path, gid); cache_stat_cleanup(state, path->path); }
     return rc;
 }
 

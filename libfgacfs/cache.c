@@ -1,4 +1,4 @@
-/*
+/*de
   Copyright (C) 2016      Roman Y. Dayneko, <dayneko3000@gmail.com>
                 2017-2018 Nikita Yu. Lovyagin, <lovyagin@mail.com>
 
@@ -22,6 +22,16 @@ void rb_clear (rb_node *node)
     free(node);
 }
 
+void st_clear (st_node *node)
+{
+    if (!node) return;
+    st_clear (node->left);
+    st_clear (node->right);
+    free (node->groups);
+    free(node);
+}
+
+
 int prm_cmp (const fgac_prm *key1, const fgac_prm *key2)
 {
     if (key1->cat < key2->cat) return -1;
@@ -34,6 +44,16 @@ int prm_cmp (const fgac_prm *key1, const fgac_prm *key2)
         default:         return 0;
     }
 }
+
+int id_cmp (uid_t uid1, gid_t gid1, uid_t uid2, gid_t gid2)
+{
+    if (uid1 < uid2) return -1;
+    if (uid1 > uid2) return  1;
+    if (gid1 < gid2) return -1;
+    if (gid1 > gid2) return  1;
+    return 0;
+}
+
 
 rb_node * rb_search (rb_node *node, const fgac_prm *prm)
 {
@@ -48,6 +68,22 @@ rb_node * rb_search (rb_node *node, const fgac_prm *prm)
     }
     return NULL;
 }
+
+st_node * st_search (st_node *node, uid_t uid, gid_t gid)
+{
+    while (node)
+    {
+        
+        switch (id_cmp(uid, gid, node->uid, node->gid))
+        {
+            case -1: node = node->left;  break;
+            case +1: node = node->right; break;
+            default: return node;
+        }
+    }
+    return NULL;
+}
+
 
 rb_node * rb_rotate_left (rb_node *root, rb_node *x)
 {
@@ -73,6 +109,31 @@ rb_node * rb_rotate_left (rb_node *root, rb_node *x)
     return root;
 }
 
+st_node * st_rotate_left (st_node *root, st_node *x)
+{
+    st_node *y = x->right;
+
+    x->right = y->left;
+    if (y->left)
+        y->left->parent = x;
+
+    if (!x->parent)
+        root = y;
+    else
+    {
+        if (x == x->parent->left)
+            x->parent->left = y;
+        else
+            x->parent->right = y;
+    }
+    y->parent = x->parent;
+
+    y->left = x;
+    x->parent = y;
+    return root;
+}
+
+
 rb_node * rb_rotate_right (rb_node *root, rb_node *x)
 {
     rb_node *y = x->left;
@@ -96,6 +157,31 @@ rb_node * rb_rotate_right (rb_node *root, rb_node *x)
     x->parent = y;
     return root;
 }
+
+st_node * st_rotate_right (st_node *root, st_node *x)
+{
+    st_node *y = x->left;
+
+    x->left = y->right;
+    if (y->right)
+        y->right->parent = x;
+
+    if (!x->parent)
+        root = y;
+    else
+    {
+        if (x == x->parent->left)
+            x->parent->left = y;
+        else
+            x->parent->right = y;
+    }
+    y->parent = x->parent;
+
+    y->right = x;
+    x->parent = y;
+    return root;
+}
+
 
 rb_node * rb_bst_insert (rb_node *x, const fgac_prm *prm)
 {
@@ -149,6 +235,61 @@ rb_node * rb_bst_insert (rb_node *x, const fgac_prm *prm)
     return z;
 }
 
+st_node * st_bst_insert (st_node *x, const fgac_prc *prc, mode_t mode, int dex)
+{
+    st_node *y = NULL, *root = x, *z;
+
+    while (x)
+    {
+        y = x;
+
+        switch (id_cmp(prc->uid, prc->gid, x->uid, x->gid))
+        {
+            case -1: x = x->left;  break;
+            case +1: x = x->right; break;
+            default: 
+                {
+                    free(x->groups);
+                    x->ngrp = prc->ngroups;
+                    x->groups=malloc (sizeof(gid_t) * x->ngrp);
+                    if (!x->groups) return NULL;
+                    memcpy(x->groups,prc->groups,sizeof(gid_t) * x->ngrp);
+                    if (mode != (mode_t) -1) x->mode=mode;
+                    if (dex != -1) x->dex=dex;
+                    return root;
+                }
+        }
+    }
+
+
+    z = malloc (sizeof(st_node));
+    if (!z) return NULL;
+    
+    z->color = RED;
+    z->left  = z->right   = NULL;
+    
+    z->uid = prc->uid;
+    z->gid = prc->gid;
+    z->ngrp = prc->ngroups;
+    z->groups=malloc (sizeof(gid_t) * z->ngrp);
+    if (!z->groups) return NULL;
+    memcpy(z->groups,prc->groups,sizeof(gid_t) * z->ngrp);
+    z->mode=mode;
+    z->dex=dex;
+
+    z->parent = y;
+    if (y)
+    {
+        if (id_cmp(z->uid, z->gid, y->uid, y->gid) < 0)
+            y->left = z;
+        else
+            y->right = z;
+    }
+
+    return z;
+}
+
+
 rb_node * rb_insert (rb_node *t, const fgac_prm *prm)
 {
     rb_node *x = rb_bst_insert(t, prm);
@@ -193,6 +334,49 @@ rb_node * rb_insert (rb_node *t, const fgac_prm *prm)
     return t;
 }
 
+st_node * st_insert (st_node *t, const fgac_prc *prc, mode_t mode, int dex)
+{
+    st_node *x = st_bst_insert(t, prc, mode, dex);
+    
+    if (!x) return NULL;
+    if (!t) t = x;
+
+    while (x != t && x->parent->color == RED)
+    {
+        st_node *y = x->parent == x->parent->parent->left ? x->parent->parent->right
+                                                          : x->parent->parent->left;
+
+        if (y && y->color == RED)
+        {
+            x->parent->color         = BLACK;
+            y->color                 = BLACK;
+            x->parent->parent->color = RED;
+            x = x->parent->parent;
+        }
+        else
+        {            
+            if (x->parent == x->parent->parent->left && x == x->parent->right)
+            {
+                x = x->parent;
+                t = st_rotate_left(t, x);
+            }
+            else if (x->parent == x->parent->parent->right && x == x->parent->left)
+            {
+                x = x->parent;
+                t = st_rotate_right(t, x);
+            }
+
+            x->parent->color         = BLACK;
+            x->parent->parent->color = RED;
+            t = x == x->parent->left ? st_rotate_right(t, x->parent->parent)
+                                     : st_rotate_left (t, x->parent->parent);
+        }
+    }
+
+    t->color = BLACK;
+
+    return t;
+}
 
 
 uint32_t hash_func(const void *key, size_t size) 
@@ -220,6 +404,7 @@ struct cache_entry * deque_push (deque *l)
     n->next = l->back;
     n->prev = NULL;
     n->rb = NULL;
+    n->st = NULL;
     n->gid=-1;
     n->uid=-1;
     n->inh=~(uint64_t)0;
@@ -286,6 +471,7 @@ hash_node * deque_remove (deque *l, struct cache_entry *e)
         e->next->prev = e->prev;
         
     rb_clear (e->rb);
+    st_clear (e->st);
     free(e);
     
     return n;
@@ -342,10 +528,12 @@ void hash_free (hash_table *hash)
     free (hash);
 }
 
-struct cache * cache_init (size_t capacity)
+struct cache * cache_init (size_t capacity, int stat_cache)
 {
     struct cache *c = malloc(sizeof(struct cache));
     if (!c) return NULL;
+    
+    c->stat_cache = stat_cache;
     
     c->hash = hash_init (capacity);
     if (!c->hash)
@@ -456,6 +644,36 @@ struct cache_entry * cache_find (struct cache *c, const char *path)
     return e;
 }
 
+void cache_stat_cleanup (fgac_state *state, const char *path)
+{
+    char prefix[FGAC_LIMIT_PATH];
+    size_t len = strlen(path), plen;
+
+    if (!state->cache->stat_cache) return;
+    
+    if (len + 1 >= FGAC_LIMIT_PATH) return;
+    
+    memcpy(prefix, path, len);
+    prefix[len]     =  '/';
+    prefix[len + 1] = '\0';
+    ++len;
+    plen = len + 1;
+    
+    struct cache_entry *l = state->cache->list->front;
+    while (l)
+    {
+       size_t clen = strlen(l->n->path);
+       if ((clen == len  && !memcmp(l->n->path, path, len)) || 
+           (clen >= plen && !memcmp(l->n->path, path, plen))
+          )
+       {
+           st_clear(l->st);
+           l->st=NULL;
+       }
+       l=l->prev;
+    }
+}
+
 void cache_cleanup (fgac_state *state)
 {
     if (state->fd_fifo != -1)
@@ -472,6 +690,7 @@ void cache_cleanup (fgac_state *state)
                 struct cache_entry *e = cache_find (state->cache, state->buffer);
                 state->bpos = 0;
                 if (e) cache_remove (state->cache, e);
+                cache_stat_cleanup(state, state->buffer);
             }
             else
             {
@@ -520,6 +739,7 @@ int cache_get_group (fgac_state *state, fgac_path *path, gid_t *gid)
     *gid = path->cache->gid;
     return 1;
 }
+
 int cache_set_group (fgac_state *state, fgac_path *path, gid_t gid)
 {
     if (!state->cache) return 0;
@@ -620,3 +840,75 @@ int cache_unset_prm (fgac_state *state, fgac_path *path, const fgac_prm *prm)
     return 1;
 }
 
+int cache_get_dex (fgac_state *state, fgac_path *path, const fgac_prc *prc, int *dex)
+{
+    if (prc->cmd) return 0;
+    if (!state->cache) return 0;
+    cache_cleanup(state);
+
+    if (!path->cache) path->cache = cache_find(state->cache, path->path);
+    if (!path->cache) return 0;
+
+    st_node *n = st_search (path->cache->st, prc->uid, prc->gid);
+    if (!n) return 0;
+
+    if (prc->ngroups != n->ngrp || memcmp(prc->groups, n->groups, n->ngrp * sizeof (gid_t))) 
+    {
+        cache_stat_cleanup (state, path->path);
+        return 0;
+    }
+
+    if (n->dex == -1) return 0;
+
+    *dex = n->dex;
+
+    return 1;
+}
+
+void cache_set_dex (fgac_state *state, fgac_path *path, const fgac_prc *prc, int dex)
+{
+    if (prc->cmd) return;
+    if (!state->cache) return;
+
+    if (!path->cache) path->cache = cache_find(state->cache, path->path);
+    if (!path->cache) return;
+
+    path->cache->st = st_insert(path->cache->st, prc, (mode_t) -1, dex);
+
+}
+
+int cache_get_mode (fgac_state *state, fgac_path *path, const fgac_prc *prc, mode_t *mode)
+{
+    if (prc->cmd) return 0;
+    if (!state->cache) return 0;
+    cache_cleanup(state);
+
+    if (!path->cache) path->cache = cache_find(state->cache, path->path);
+    if (!path->cache) return 0;
+
+    st_node *n = st_search (path->cache->st, prc->uid, prc->gid);
+    if (!n) return 0;
+
+    if (prc->ngroups != n->ngrp || memcmp(prc->groups, n->groups, n->ngrp * sizeof (gid_t))) 
+    {
+        cache_stat_cleanup (state, path->path);
+        return 0;
+    }
+
+    if (n->mode == (mode_t) -1) return 0;
+
+    *mode = n->mode;
+
+    return 1;
+}
+
+void cache_set_mode (fgac_state *state, fgac_path *path, const fgac_prc *prc, mode_t mode)
+{
+    if (prc->cmd) return;
+    if (!state->cache) return;
+
+    if (!path->cache) path->cache = cache_find(state->cache, path->path);
+    if (!path->cache) return;
+
+    st_insert(path->cache->st, prc, mode, -1);
+}

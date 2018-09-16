@@ -16,6 +16,7 @@
     "\tcache=NUM\tset cache size (4096 entries by default, 0 for no cahce)\n"
     "\tnocmd\tdon't check program\'s permissions\n\t\t\tthis control is enabled by default on root-mount,\n\t\t\talways disabled on user mount\n"
     "\tdirect_io\tuse direct i/o (fast write, very slow read)\n"
+    "\tnosc\tdisable stat data cache\n"
     "\tro, rw, suid, nosuid, dev, nodev, exec, noexec, atime, noatime FUSE options are supported\n"
     "hostdir\t\tFGACFS host directory\n"
     "mountpoint\tmount point\n",                                         /* FGACFS_MSG_HELP      */

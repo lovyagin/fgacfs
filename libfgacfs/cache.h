@@ -20,6 +20,19 @@ typedef struct rb_node
     struct rb_node *left, *right, *parent;
 } rb_node;
 
+typedef struct st_node
+{
+    uid_t    uid;
+    gid_t    gid;
+    gid_t   *groups;
+    size_t   ngrp;
+    mode_t   mode;
+    int      dex;
+    rb_color color;
+    struct st_node *left, *right, *parent;
+} st_node;
+
+
 struct hash_node;
 
 struct cache_entry
@@ -30,6 +43,7 @@ struct cache_entry
     gid_t               gid;
     uint64_t            inh;
     struct rb_node     *rb;
+    struct st_node     *st;
 };
 
 typedef struct
@@ -56,9 +70,10 @@ struct cache
 {
     hash_table *hash;
     deque      *list;
+    int         stat_cache;
 };
 
-struct cache * cache_init (size_t capacity);
+struct cache * cache_init (size_t capacity, int stat_cache);
 
 void cache_free (struct cache *c);
 
@@ -81,5 +96,11 @@ int cache_get_prm (fgac_state *state, fgac_path *path, fgac_prm *prm);
 int cache_set_prm (fgac_state *state, fgac_path *path, const fgac_prm *prm);
 int cache_unset_prm (fgac_state *state, fgac_path *path, const fgac_prm *prm);
 
+int cache_get_dex (fgac_state *state, fgac_path *path, const fgac_prc *prc, int *dex);
+int cache_get_mode (fgac_state *state, fgac_path *path, const fgac_prc *prc, mode_t *mode);
+void cache_set_dex (fgac_state *state, fgac_path *path, const fgac_prc *prc, int dex);
+void cache_set_mode (fgac_state *state, fgac_path *path, const fgac_prc *prc, mode_t mode);
+
+void cache_stat_cleanup (fgac_state *state, const char *path);
 
 #endif // CACHE_H_INCLUDED

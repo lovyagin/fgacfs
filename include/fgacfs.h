@@ -307,11 +307,12 @@ void fgac_init (const char *name, const char *version);
 * @param[in]  check_prexec should be non-zero if executable process permission checking required, 0 otherwise
 * @param[in]  dio should be non-zero if direct_io is required
 * @param[in]  cache_size cache size (number of entries), uncached if 0
+* @param[in]  state_cache should be non-zero to enable stat caching
 * @param[out] state   pointer to pointer to a newly allocated fgacfs handler or to NULL on fail
 * @return     FGAC_OK (0) on success
 *             fgacfs error code on fail
 */
-int fgac_open   (const char *hostdir, int check_prexec, int dio, fgac_state **state, size_t cache_size);
+int fgac_open   (const char *hostdir, int check_prexec, int dio, fgac_state **state, size_t cache_size, int stat_cache);
 
 /**
 * @brief         close fgacfs

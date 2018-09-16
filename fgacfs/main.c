@@ -44,18 +44,19 @@ int str_to_int (const char *str, unsigned long *value)
 #define USAGE { fgac_put_msg(FGACFS_MSG_USAGE, fgac_prg_name); return 1; }
 
 #define OPARSE                                      \
-        if (!strcmp(p, "nocmd"))         cmd = 0;   \
-        else if (!strcmp(p, "direct_io")) dio = 1;  \
-        else if (!strcmp(p, "ro"))      oro   = 1;  \
-        else if (!strcmp(p, "rw"))      oro   = 0;  \
-        else if (!strcmp(p, "suid"))    osuid = 1;  \
-        else if (!strcmp(p, "nosuid"))  osuid = 0;  \
-        else if (!strcmp(p, "dev"))     odev  = 1;  \
-        else if (!strcmp(p, "nodev"))   odev  = 0;  \
-        else if (!strcmp(p, "exec"))    oexec = 1;  \
-        else if (!strcmp(p, "noexec"))  oexec = 0;  \
+        if (!strcmp(p, "nocmd"))         cmd   = 0; \
+        else if (!strcmp(p, "direct_io")) dio  = 1; \
+        else if (!strcmp(p, "ro"))      oro    = 1; \
+        else if (!strcmp(p, "rw"))      oro    = 0; \
+        else if (!strcmp(p, "suid"))    osuid  = 1; \
+        else if (!strcmp(p, "nosuid"))  osuid  = 0; \
+        else if (!strcmp(p, "dev"))     odev   = 1; \
+        else if (!strcmp(p, "nodev"))   odev   = 0; \
+        else if (!strcmp(p, "exec"))    oexec  = 1; \
+        else if (!strcmp(p, "noexec"))  oexec  = 0; \
         else if (!strcmp(p, "atime"))   oatime = 1; \
         else if (!strcmp(p, "noatime")) oatime = 0; \
+        else if (!strcmp(p, "nosc"))    osc    = 0; \
         else                                        \
         {                                           \
             char *e = strchr(p, '=');               \
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
 
     fgac_state *state;
     
-    int oro=0, osuid=0, odev=1, oexec=1, oatime=1, dio=0;
+    int oro=0, osuid=0, odev=1, oexec=1, oatime=1, dio=0, osc=1;
     char oplist[FGAC_LIMIT_PATH];
     
     
@@ -161,8 +162,8 @@ int main(int argc, char *argv[])
         fgac_put_msg(FGACFS_MSG_NOCMD, argv[0]);
     }
 
-    if ((rc = fgac_open(hostdir, cmd, dio, &state, csize))) {fgac_put_msg(rc); return 2;}
-    if ((rc = fgac_mount(state, mountdir)))                 {fgac_put_msg(rc); return 2;}
+    if ((rc = fgac_open(hostdir, cmd, dio, &state, csize, osc))) {fgac_put_msg(rc); return 2;}
+    if ((rc = fgac_mount(state, mountdir)))                      {fgac_put_msg(rc); return 2;}
 
     if (!fgacfs_ops)
     {
