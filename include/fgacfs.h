@@ -64,15 +64,18 @@ extern char fgac_prg_version[];
 #define FGAC_INH_SPI (1uLL << 32) /** Set inheritance flag (transmit permissions) **/
 #define FGAC_INH_SPS (1uLL << 33) /** Set "set (keep) permission" flag **/
 #define FGAC_INH_CPR (1uLL << 34) /** Copy permission to child **/
+#define FGAC_INH_SCP (1uLL << 35) /** Set copy permission to child **/
 
 #define FGAC_INH_SFP (1uLL << 48) /** Set dir->file permission inheritance flag **/
 #define FGAC_INH_SFS (1uLL << 49) /** Set "set (keep) dir->file permission" flag **/
 #define FGAC_INH_CFP (1uLL << 50) /** Copy dir->file permission to child **/
+#define FGAC_INH_SCF (1uLL << 51) /** Set copy permission to child **/
 
 #define FGAC_INH_FILE (FGAC_INT_INT | FGAC_INH_SET)               /** File-assigned inheritance **/
 #define FGAC_INH_DIRS (FGAC_INH_IFP | FGAC_INH_IFS |              \
-                     FGAC_INH_SPI | FGAC_INH_SPS | FGAC_INH_CPR | \
-                     FGAC_INH_SFP | FGAC_INH_SFS | FGAC_INH_CFP)  /** Dir-assigned inheritance **/
+                     FGAC_INH_SPI | FGAC_INH_SPS | FGAC_INH_CPR | FGAC_INH_SCP |\
+                     FGAC_INH_SFP | FGAC_INH_SFS | FGAC_INH_CFP | FGAC_INH_SCF)  
+                                                                  /** Dir-assigned inheritance **/
 
 #define FGAC_INH_INHS (FGAC_INH_INH | FGAC_INH_SET | \
                      FGAC_INH_IFP | FGAC_INH_IFS)               /** Inheritance **/

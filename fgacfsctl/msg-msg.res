@@ -132,11 +132,11 @@
     "\tIFP\t(dir only) inherit permission transmitted to file from parent directory\n"
     "\tIFS\t(dir only) keep inherit permission transmitted to file when flag is removed\n"
     "\tSPI\t(dir only) set inheritance (INH) flag on new entries\n"
-    "\tSPS\t(dir only) set keep permission (SET) flag on new entries\n"
-    "\tCPR\t(dir only) copy permission to new entries (like inherited)\n"
+    "\tSPS\t(dir only) set copy permission (CPR) flag on new entries\n"
     "\tSFP\t(dir only) set transmitted permission inheritance (IFP) flag on new entries\n"
     "\tSFS\t(dir only) set keep transmitted permission (IFS) flag on new entries\n"
     "\tCFP\t(dir only) copy transmitted permission to new entries (like inherited)\n"
+    "\tSCF\t(dir only) set copy transmitted permission (CFP) flag on new entries\n"
 
 
     "\n\nWarning, if running not under root and not under FGACFS owner,\n"

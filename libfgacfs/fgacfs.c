@@ -1103,6 +1103,10 @@ int fgac_set_mkdir_prm (fgac_state *state, fgac_path *path)
     if (pinh & FGAC_INH_SFP) inh |= FGAC_INH_IFP | FGAC_INH_SFP;
     if (pinh & FGAC_INH_SFS) inh |= FGAC_INH_IFS | FGAC_INH_SFS;
 
+    if (pinh & FGAC_INH_SCP) inh |= FGAC_INH_CPR | FGAC_INH_SCP;
+    if (pinh & FGAC_INH_SCF) inh |= FGAC_INH_CFP | FGAC_INH_SCF;
+
+
     if ((rc = fgac_set_inh(state, path, inh))) return rc;
 
     if ((pinh & FGAC_INH_CPR) && (pinh & FGAC_INH_CFP))

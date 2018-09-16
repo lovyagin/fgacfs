@@ -151,6 +151,8 @@ int fgacfsctl_get_inh (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
     else if (!strcmp (argv[0], "SFP")) inh &= FGAC_INH_SFP;
     else if (!strcmp (argv[0], "SFS")) inh &= FGAC_INH_SFS;
     else if (!strcmp (argv[0], "CFP")) inh &= FGAC_INH_CFP;
+    else if (!strcmp (argv[0], "SCP")) inh &= FGAC_INH_SCP;
+    else if (!strcmp (argv[0], "SCF")) inh &= FGAC_INH_SCF;
     else    return FGACFSCTL_ERR_INH;
 
     printf (inh ? "1" : "0");
@@ -435,6 +437,8 @@ int fgacfsctl_set_inh (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
     else if (!strcmp (argv[0], "SFP")) inh = FGAC_INH_SFP;
     else if (!strcmp (argv[0], "SFS")) inh = FGAC_INH_SFS;
     else if (!strcmp (argv[0], "CFP")) inh = FGAC_INH_CFP;
+    else if (!strcmp (argv[0], "SCP")) inh = FGAC_INH_SCP;
+    else if (!strcmp (argv[0], "SCF")) inh = FGAC_INH_SCF;
     else    return FGACFSCTL_ERR_INH;
 
     if (!fgac_check_prm2(state, &path, prc, FGAC_PRM_FCI, inh & FGAC_INH_TRMS ? FGAC_PRM_DCT : FGAC_PRM_DCI)) return FGACFSCTL_ERR_PRM;
@@ -596,9 +600,11 @@ void fgacfsctl_show_inhs (uint64_t inh, int isdir)
         SHOW_INH(SPI)
         SHOW_INH(SPS)
         SHOW_INH(CPR)
+        SHOW_INH(SCP)
         SHOW_INH(SFP)
         SHOW_INH(SFS)
         SHOW_INH(CFP)
+        SHOW_INH(SCF)
     }
     printf ("\n");
 }
