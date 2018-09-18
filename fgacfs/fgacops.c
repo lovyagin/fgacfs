@@ -109,9 +109,9 @@ int fgacfs_readlink (const char *rpath, char *buffer, size_t s)
 }
 
 
-#define CHECK_OWN(mk,ad)                     \
-    if      (pprm & FGAC_PRM_D##mk) own = 1; \
-    else if (pprm & FGAC_PRM_D##ad) own = 0; \
+#define CHECK_OWN(t)                         \
+    if      (pprm & FGAC_PRM_DO##t) own = 1; \
+    else if (pprm & FGAC_PRM_DO##t) own = 0; \
     else return -EACCES;
 
 #define ADD(addf,rmf)                            \
@@ -160,35 +160,62 @@ printf("2\n");\
     fgac_set_prm(state, path, prm);                                   \
 
 
-#define ADD_ORD_PRM(df)                                  \
-    if (!fgac_check_inh(state, parent, FGAC_INH_SPI) &&  \
-        !fgac_check_inh(state, parent, FGAC_INH_CPR)     \
+#define ADD_ORD_PRM_FILE                                 \
+    if (!fgac_check_inh(state, parent, FGAC_INH_FPI) &&  \
+        !fgac_check_inh(state, parent, FGAC_INH_FPC)     \
        )                                                 \
     {                                                    \
         fgac_prm fgacprm, *prm = &fgacprm;               \
                                                          \
         prm->cat   = FGAC_CAT_UID;                       \
         prm->prc.uid = prc->uid;                         \
-        ADD_ORD_PRM_SINGLE(USR,df)                       \
+        ADD_ORD_PRM_SINGLE(USR,F)                        \
                                                          \
         prm->cat   = FGAC_CAT_GID;                       \
         prm->prc.gid = prc->gid;                         \
-        ADD_ORD_PRM_SINGLE(GRP,df)                       \
+        ADD_ORD_PRM_SINGLE(GRP,F)                        \
                                                          \
         prm->cat   = FGAC_CAT_OUS;                       \
         prm->allow = prm->deny = 0;                      \
-        ADD_ORD_PRM_SINGLE(USR,df)                       \
+        ADD_ORD_PRM_SINGLE(USR,F)                        \
                                                          \
         prm->cat   = FGAC_CAT_OGR;                       \
-        ADD_ORD_PRM_SINGLE(GRP,df)                       \
+        ADD_ORD_PRM_SINGLE(GRP,F)                        \
                                                          \
         prm->cat   = FGAC_CAT_OTH;                       \
-        ADD_ORD_PRM_SINGLE(OTH,df)                       \
+        ADD_ORD_PRM_SINGLE(OTH,F)                        \
     }
 
+#define ADD_ORD_PRM_DIRS                                 \
+    if (!fgac_check_inh(state, parent, FGAC_INH_DPI) &&  \
+        !fgac_check_inh(state, parent, FGAC_INH_DPC)     \
+       )                                                 \
+    {                                                    \
+        fgac_prm fgacprm, *prm = &fgacprm;               \
+                                                         \
+        prm->cat   = FGAC_CAT_UID;                       \
+        prm->prc.uid = prc->uid;                         \
+        ADD_ORD_PRM_SINGLE(USR,D)                        \
+                                                         \
+        prm->cat   = FGAC_CAT_GID;                       \
+        prm->prc.gid = prc->gid;                         \
+        ADD_ORD_PRM_SINGLE(GRP,D)                        \
+                                                         \
+        prm->cat   = FGAC_CAT_OUS;                       \
+        prm->allow = prm->deny = 0;                      \
+        ADD_ORD_PRM_SINGLE(USR,D)                        \
+                                                         \
+        prm->cat   = FGAC_CAT_OGR;                       \
+        ADD_ORD_PRM_SINGLE(GRP,D)                        \
+                                                         \
+        prm->cat   = FGAC_CAT_OTH;                       \
+        ADD_ORD_PRM_SINGLE(OTH,D)                        \
+    }
+
+
 #define ADD_ORD_PRM_SL                                   \
-    if (!fgac_check_inh(state, parent, FGAC_INH_SPI) &&  \
-        !fgac_check_inh(state, parent, FGAC_INH_CPR)     \
+    if (!fgac_check_inh(state, parent, FGAC_INH_FPI) &&  \
+        !fgac_check_inh(state, parent, FGAC_INH_FPC)     \
        )                                                 \
     {                                                    \
         fgac_prm fgacprm, *prm = &fgacprm;               \
@@ -241,12 +268,13 @@ printf("2\n");\
                                                                            \
             if (inh != newinh)                                             \
             {                                                              \
-                fgac_set_inh(state, path, inh);                            \
                                                                            \
-                if (!(inh & FGAC_INH_INH) && (newinh & FGAC_INH_INH))      \
-                    fgac_unset_inh (state, path);                          \
-                if (!(inh & FGAC_INH_IFP) && (newinh & FGAC_INH_IFP))      \
-                    fgac_unset_ifp (state, path);                          \
+                if ((inh & FGAC_INH_DPI) && !(newinh & FGAC_INH_DPI))      \
+                    fgac_unset_dpi (state, path);                          \
+                if ((inh & FGAC_INH_FPI) && !(newinh & FGAC_INH_FPI))      \
+                    fgac_unset_fpi (state, path);                          \
+                else                                                       \
+                    fgac_set_inh(state, path, inh);                        \
             }                                                              \
         }                                                                  \
         if (fgac_check_prm2(state, path, prc, FGAC_PRM_FCP, FGAC_PRM_DCP)) \
@@ -286,11 +314,13 @@ int fgacfs_add(const char  *rpath,
     {
         int fd;
         
+/*
 #ifndef NDEBUG
         printf("pprm %llX DMK %llX DAF %llX DMK %llX\n", pprm, pprm & FGAC_PRM_DMK, pprm & FGAC_PRM_DAF, FGAC_PRM_DMK);
 #endif        
+*/
         
-        CHECK_OWN(MK,AF)
+        CHECK_OWN(F)
 
         if (!source)
         {
@@ -300,52 +330,52 @@ int fgacfs_add(const char  *rpath,
         }
 
         ADD_FILE
-        ADD_ORD_PRM(F)
+        ADD_ORD_PRM_FILE
         CHOWNMOD
     }
     else if (S_ISCHR(stat->st_mode))
     {
-        CHECK_OWN(CH,AC)
+        CHECK_OWN(C)
         if (!source) FGACFS_FAILCALL(mknod(hostpath, hostmode, stat->st_dev))
         ADD_FILE
-        ADD_ORD_PRM(F)
+        ADD_ORD_PRM_FILE
         CHOWNMOD
     }
     else if (S_ISBLK(stat->st_mode))
     {
-        CHECK_OWN(BL,AB)
+        CHECK_OWN(B)
         if (!source) FGACFS_FAILCALL(mknod(hostpath, hostmode, stat->st_dev))
         ADD_FILE
-        ADD_ORD_PRM(F)
+        ADD_ORD_PRM_FILE
         CHOWNMOD
     }
     else if (S_ISFIFO(stat->st_mode))
     {
-        CHECK_OWN(FF,AP)
+        CHECK_OWN(P)
         if (!source) FGACFS_FAILCALL(mkfifo(hostpath, hostmode))
         ADD_FILE
-        ADD_ORD_PRM(F)
+        ADD_ORD_PRM_FILE
         CHOWNMOD
     }
     else if (S_ISSOCK(stat->st_mode))
     {
-        CHECK_OWN(SC,AO)
+        CHECK_OWN(S)
         if (!source) FGACFS_FAILCALL(mknod(hostpath, hostmode, stat->st_dev))
         ADD_FILE
-        ADD_ORD_PRM(F)
+        ADD_ORD_PRM_FILE
         CHOWNMOD
     }
     else if (S_ISDIR(stat->st_mode))
     {
-        CHECK_OWN(MD,AD)
+        CHECK_OWN(D)
         if (!source) FGACFS_FAILCALL(mkdir(hostpath, hostmode));
         ADD_DIR
-        ADD_ORD_PRM(D)
+        ADD_ORD_PRM_DIRS
         CHOWNMOD
     }
     else if (S_ISLNK(stat->st_mode))
     {
-        CHECK_OWN(SL,AL)
+        CHECK_OWN(L)
         if (!source) FGACFS_FAILCALL(symlink(target, hostpath))
         ADD_FILE
         ADD_ORD_PRM_SL
@@ -635,7 +665,7 @@ int fgacfs_chown (const char *rpath, uid_t uid, gid_t gid)
             if (!parent) return -EACCES;
 
             if (fgac_get_owner (state, parent, &puid)) return -EACCES;
-            if (puid != uid || !fgac_check_prm2(state, path, prc, FGAC_PRM_FOP, FGAC_PRM_DOP)) return -EACCES;
+            if (puid != uid || !fgac_check_prm2(state, path, prc, FGAC_PRM_FSP, FGAC_PRM_DSP)) return -EACCES;
         }
     }
 
@@ -647,7 +677,7 @@ int fgacfs_chown (const char *rpath, uid_t uid, gid_t gid)
             if (!parent) return -EACCES;
 
             if (fgac_get_group (state, parent, &pgid)) return -EACCES;
-            if (pgid != gid || !fgac_check_prm2(state, path, prc, FGAC_PRM_FOP, FGAC_PRM_DOP)) return -EACCES;
+            if (pgid != gid || !fgac_check_prm2(state, path, prc, FGAC_PRM_FSP, FGAC_PRM_DSP)) return -EACCES;
         }
     }
 

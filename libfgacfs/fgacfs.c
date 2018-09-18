@@ -374,16 +374,8 @@ int fgac_check_inh_prm (fgac_state *state, fgac_path *path, const fgac_prc *prc,
     fgac_path path1 = fgac_path_init(buffer1), path2 = fgac_path_init(buffer2),
               *curpath = &path1, *oldpath = &path2;
 
-    if (fgac_is_dir(state, path))
-    {
-        go_dprm = fgac_check_inh (state, path, FGAC_INH_INH);
-        go_fprm = fgac_check_inh (state, path, FGAC_INH_IFP);
-    }
-    else
-    {
-        go_dprm = 0;
-        go_fprm = fgac_check_inh (state, path, FGAC_INH_INH);
-    }
+    go_dprm = fgac_is_dir(state, path) ? fgac_check_inh (state, path, FGAC_INH_DPI) : 0;
+    go_fprm = fgac_check_inh (state, path, FGAC_INH_FPI);
 
     if (!fgac_str_cpy(fgac_get_path(oldpath), FGAC_PATH, FGAC_LIMIT_PATH)) return ENOMEM;
 
@@ -397,8 +389,8 @@ int fgac_check_inh_prm (fgac_state *state, fgac_path *path, const fgac_prc *prc,
         if ((q = fgac_check_entry_prm(state, curpath, prc, prm)) == -1) return 0;
         r = r || q;
 
-        go_dprm = go_dprm && fgac_check_inh (state, curpath, FGAC_INH_INH);
-        go_fprm = go_fprm && fgac_check_inh (state, curpath, FGAC_INH_IFP);
+        go_dprm = go_dprm && fgac_check_inh (state, curpath, FGAC_INH_DPI);
+        go_fprm = go_fprm && fgac_check_inh (state, curpath, FGAC_INH_FPI);
 
         swappath(&oldpath, &curpath);
     }
@@ -415,16 +407,8 @@ uint64_t fgac_check_inh_prms (fgac_state *state, fgac_path *path, const fgac_prc
               *curpath = &path1, *oldpath = &path2;
     uint64_t allow, deny;
 
-    if (fgac_is_dir(state, path))
-    {
-        go_dprm = fgac_check_inh (state, path, FGAC_INH_INH);
-        go_fprm = fgac_check_inh (state, path, FGAC_INH_IFP);
-    }
-    else
-    {
-        go_dprm = 0;
-        go_fprm = fgac_check_inh (state, path, FGAC_INH_INH);
-    }
+    go_dprm = fgac_is_dir(state, path) ? fgac_check_inh (state, path, FGAC_INH_DPI) : 0;
+    go_fprm = fgac_check_inh (state, path, FGAC_INH_FPI);
 
     if (!fgac_str_cpy(fgac_get_path(oldpath), FGAC_PATH, FGAC_LIMIT_PATH)) return ENOMEM;
 
@@ -445,8 +429,8 @@ uint64_t fgac_check_inh_prms (fgac_state *state, fgac_path *path, const fgac_prc
             deny  |= d & FGAC_PRM_DIRS;
         }
 
-        go_dprm = go_dprm && fgac_check_inh (state, curpath, FGAC_INH_INH);
-        go_fprm = go_fprm && fgac_check_inh (state, curpath, FGAC_INH_IFP);
+        go_dprm = go_dprm && fgac_check_inh (state, curpath, FGAC_INH_DPI);
+        go_fprm = go_fprm && fgac_check_inh (state, curpath, FGAC_INH_FPI);
 
         swappath(&oldpath, &curpath);
     }
@@ -959,16 +943,8 @@ fgac_prms fgac_get_inhprms (fgac_state *state, fgac_path *path)
     fgac_path path1 = fgac_path_init(buffer1), path2 = fgac_path_init(buffer2),
               *curpath = &path1, *oldpath = &path2;
 
-    if (fgac_is_dir(state, path))
-    {
-        go_dprm = fgac_check_inh (state, path, FGAC_INH_INH);
-        go_fprm = fgac_check_inh (state, path, FGAC_INH_IFP);
-    }
-    else
-    {
-        go_dprm = 0;
-        go_fprm = fgac_check_inh (state, path, FGAC_INH_INH);
-    }
+    go_dprm = fgac_is_dir(state, path) ? fgac_check_inh (state, path, FGAC_INH_DPI) : 0;
+    go_fprm = fgac_check_inh (state, path, FGAC_INH_FPI);
 
     if (!fgac_str_cpy(fgac_get_path(oldpath), FGAC_PATH, FGAC_LIMIT_PATH)) return fgac_prms_error();
 
@@ -992,8 +968,8 @@ fgac_prms fgac_get_inhprms (fgac_state *state, fgac_path *path)
         }
         fgac_prms_free(&q);
 
-        go_dprm = go_dprm && fgac_check_inh (state, curpath, FGAC_INH_INH);
-        go_fprm = go_fprm && fgac_check_inh (state, curpath, FGAC_INH_IFP);
+        go_dprm = go_dprm && fgac_check_inh (state, curpath, FGAC_INH_FPI);
+        go_fprm = go_fprm && fgac_check_inh (state, curpath, FGAC_INH_DPI);
 
         swappath(&oldpath, &curpath);
     } while (go_dprm || go_fprm);
@@ -1076,12 +1052,12 @@ int fgac_set_mkfile_prm (fgac_state *state, fgac_path *path)
 
     if ((rc = fgac_get_inh(state, &parent, &pinh))) return rc;
 
-    if (pinh & FGAC_INH_SPI) inh |= FGAC_INH_INH;
-    if (pinh & FGAC_INH_SPS) inh |= FGAC_INH_SET;
+    if (pinh & FGAC_INH_SFI) inh |= FGAC_INH_FPI;
+    if (pinh & FGAC_INH_SFK) inh |= FGAC_INH_FPK;
 
     if ((rc = fgac_set_inh(state, path, inh))) return rc;
 
-    if (pinh & FGAC_INH_CPR) return fgac_copy_file_prm(state, path, &parent);
+    if (pinh & FGAC_INH_FPC) return fgac_copy_file_prm(state, path, &parent);
 
     return FGAC_OK;
 }
@@ -1097,29 +1073,29 @@ int fgac_set_mkdir_prm (fgac_state *state, fgac_path *path)
 
     if ((rc = fgac_get_inh(state, &parent, &pinh))) return rc;
 
-    if (pinh & FGAC_INH_SPI) inh |= FGAC_INH_INH | FGAC_INH_SPI;
-    if (pinh & FGAC_INH_SPS) inh |= FGAC_INH_SET | FGAC_INH_SPS;
+    if (pinh & FGAC_INH_SFI) inh |= FGAC_INH_FPI | FGAC_INH_SFI;
+    if (pinh & FGAC_INH_SDI) inh |= FGAC_INH_DPI | FGAC_INH_SDI;
 
-    if (pinh & FGAC_INH_SFP) inh |= FGAC_INH_IFP | FGAC_INH_SFP;
-    if (pinh & FGAC_INH_SFS) inh |= FGAC_INH_IFS | FGAC_INH_SFS;
+    if (pinh & FGAC_INH_SFK) inh |= FGAC_INH_FPK | FGAC_INH_SFK;
+    if (pinh & FGAC_INH_SDK) inh |= FGAC_INH_DPK | FGAC_INH_SDK;
 
-    if (pinh & FGAC_INH_SCP) inh |= FGAC_INH_CPR | FGAC_INH_SCP;
-    if (pinh & FGAC_INH_SCF) inh |= FGAC_INH_CFP | FGAC_INH_SCF;
+    if (pinh & FGAC_INH_SFC) inh |= FGAC_INH_FPC | FGAC_INH_SFC;
+    if (pinh & FGAC_INH_SDC) inh |= FGAC_INH_DPC | FGAC_INH_SFC;
 
 
     if ((rc = fgac_set_inh(state, path, inh))) return rc;
 
-    if ((pinh & FGAC_INH_CPR) && (pinh & FGAC_INH_CFP))
+    if ((pinh & FGAC_INH_DPC) && (pinh & FGAC_INH_FPC))
         return fgac_copy_prm (state, path, &parent);
-    else if (pinh & FGAC_INH_CPR)
+    else if (pinh & FGAC_INH_DPC)
         return fgac_copy_dir_prm (state, path, &parent);
-    else if (pinh & FGAC_INH_CFP)
+    else if (pinh & FGAC_INH_FPC)
         return fgac_copy_file_prm (state, path, &parent);
     else
         return FGAC_OK;
 }
 
-int fgac_unset_inh (fgac_state *state, fgac_path *path)
+int fgac_unset_fpi (fgac_state *state, fgac_path *path)
 {
     uint64_t inh;
     int rc;
@@ -1128,43 +1104,40 @@ int fgac_unset_inh (fgac_state *state, fgac_path *path)
 
     if ((rc = fgac_get_inh(state, path, &inh))) return rc;
 
-    if (!(inh & FGAC_INH_INH)) return FGAC_OK;
+    if (!(inh & FGAC_INH_FPI)) return FGAC_OK;
 
-    inh &= ~FGAC_INH_INH;
+    inh &= ~FGAC_INH_FPI;
 
     if ((rc = fgac_set_inh(state, path, inh))) return rc;
 
-    if (!(inh & FGAC_INH_SET)) return FGAC_OK;
+    if (!(inh & FGAC_INH_SFI)) return FGAC_OK;
+
+    if (!fgac_parent(path, &parent)) return FGAC_OK;
+
+    return fgac_copy_file_prm(state, path, &parent);
+}
+
+int fgac_unset_dpi (fgac_state *state, fgac_path *path)
+{
+    uint64_t inh;
+    int rc;
+    char buffer[FGAC_LIMIT_PATH];
+    fgac_path parent = fgac_path_init(buffer);
+
+    if ((rc = fgac_get_inh(state, path, &inh))) return rc;
+
+    if (!(inh & FGAC_INH_DPI)) return FGAC_OK;
+
+    inh &= ~FGAC_INH_DPI;
+
+    if ((rc = fgac_set_inh(state, path, inh))) return rc;
+
+    if (!(inh & FGAC_INH_SDI)) return FGAC_OK;
 
     if (!fgac_parent(path, &parent)) return FGAC_OK;
 
     if (fgac_is_dir(state, path))
         return fgac_copy_dir_prm(state, path, &parent);
-    else
-        return fgac_copy_file_prm(state, path, &parent);
-}
-
-int fgac_unset_ifp (fgac_state *state, fgac_path *path)
-{
-    uint64_t inh;
-    int rc;
-    char buffer[FGAC_LIMIT_PATH];
-    fgac_path parent = fgac_path_init(buffer);
-
-    if ((rc = fgac_get_inh(state, path, &inh))) return rc;
-
-    if (!(inh & FGAC_INH_IFP)) return FGAC_OK;
-
-    inh &= ~FGAC_INH_IFP;
-
-    if ((rc = fgac_set_inh(state, path, inh))) return rc;
-
-    if (!(inh & FGAC_INH_IFS)) return FGAC_OK;
-
-    if (!fgac_parent(path, &parent)) return FGAC_OK;
-
-    if (fgac_is_dir(state, path))
-        return fgac_copy_file_prm(state, path, &parent);
     else
         return FGAC_OK;
 

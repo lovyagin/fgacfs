@@ -649,7 +649,7 @@ void cache_stat_cleanup (fgac_state *state, const char *path)
     char prefix[FGAC_LIMIT_PATH];
     size_t len = strlen(path), plen;
 
-    if (!state->cache->stat_cache) return;
+    if (!state->cache || !state->cache->stat_cache) return;
     
     if (len + 1 >= FGAC_LIMIT_PATH) return;
     

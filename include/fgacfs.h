@@ -50,38 +50,36 @@ extern char fgac_prg_version[];
 
 /**********************  FGACFS Permissions  *************************/
 //{
-/** permission inheritance properties **/
-#define FGAC_INH_INH (1uLL <<  0) /** Inherit permission from parent directory **/
-#define FGAC_INH_SET (1uLL <<  1) /** Set (keep) inherited permission when inherit flag removed **/
+/** file permission inheritance **/
+#define FGAC_INH_FPI (1uLL <<  0) /** Inherit file permission **/
+#define FGAC_INH_FPK (1uLL <<  1) /** File permission keep (when FPI removed) **/
+#define FGAC_INH_FPC (1uLL <<  2) /** File permission copy (like inherited) **/
 
-/** transmitted file permission inheritance properties **/
+/** file permission inheritance flag set **/
+#define FGAC_INH_SFI (1uLL << 16) /** Set FPI to child **/
+#define FGAC_INH_SFK (1uLL << 17) /** Set FPK to child **/
+#define FGAC_INH_SFC (1uLL << 18) /** Set FPI to child **/
 
-#define FGAC_INH_IFP (1uLL << 16) /** Inherit dir->file permission (permission transmitted to file) from parent directory **/
-#define FGAC_INH_IFS (1uLL << 17) /** Set (keep) dir->file permission when inherit flag removed **/
+/** directory permission inheritance **/
+#define FGAC_INH_DPI (1uLL << 32) /** Inherit directory permission **/
+#define FGAC_INH_DPK (1uLL << 33) /** Directory permission keep (when DPI removed) **/
+#define FGAC_INH_DPC (1uLL << 34) /** Directory permission copy (like inherited) **/
 
-/** permission transmission properties **/
+/** directory permission inheritance flag set **/
+#define FGAC_INH_SDI (1uLL << 48) /** Set DPI to child **/
+#define FGAC_INH_SDK (1uLL << 49) /** Set DPK to child **/
+#define FGAC_INH_SDC (1uLL << 50) /** Set DPI to child **/
 
-#define FGAC_INH_SPI (1uLL << 32) /** Set inheritance flag (transmit permissions) **/
-#define FGAC_INH_SPS (1uLL << 33) /** Set "set (keep) permission" flag **/
-#define FGAC_INH_CPR (1uLL << 34) /** Copy permission to child **/
-#define FGAC_INH_SCP (1uLL << 35) /** Set copy permission to child **/
+#define FGAC_INH_FILE (FGAC_INH_FPI | FGAC_INH_FPK)                 /** File-assigned inheritance **/
+#define FGAC_INH_DIRS (FGAC_INH_FPI | FGAC_INH_FPK | FGAC_INH_FPC | \
+                       FGAC_INH_SFI | FGAC_INH_SFK | FGAC_INH_SFC | \
+                       FGAC_INH_DPI | FGAC_INH_DPK | FGAC_INH_DPC | \
+                       FGAC_INH_SDI | FGAC_INH_SDK | FGAC_INH_SDC ) /** Dir-assigned inheritance **/
 
-#define FGAC_INH_SFP (1uLL << 48) /** Set dir->file permission inheritance flag **/
-#define FGAC_INH_SFS (1uLL << 49) /** Set "set (keep) dir->file permission" flag **/
-#define FGAC_INH_CFP (1uLL << 50) /** Copy dir->file permission to child **/
-#define FGAC_INH_SCF (1uLL << 51) /** Set copy permission to child **/
-
-#define FGAC_INH_FILE (FGAC_INT_INT | FGAC_INH_SET)               /** File-assigned inheritance **/
-#define FGAC_INH_DIRS (FGAC_INH_IFP | FGAC_INH_IFS |              \
-                     FGAC_INH_SPI | FGAC_INH_SPS | FGAC_INH_CPR | FGAC_INH_SCP |\
-                     FGAC_INH_SFP | FGAC_INH_SFS | FGAC_INH_CFP | FGAC_INH_SCF)  
-                                                                  /** Dir-assigned inheritance **/
-
-#define FGAC_INH_INHS (FGAC_INH_INH | FGAC_INH_SET | \
-                     FGAC_INH_IFP | FGAC_INH_IFS)               /** Inheritance **/
-#define FGAC_INH_TRMS (FGAC_INH_SPI | FGAC_INH_SPS | FGAC_INH_CPR | \
-                     FGAC_INH_SFP | FGAC_INH_SFS | FGAC_INH_CFP)  /** Transmission **/
-
+#define FGAC_INH_INHS (FGAC_INH_FPI | FGAC_INH_FPK | FGAC_INH_DPI | FGAC_INH_DPK) /** Inheritance flag **/
+#define FGAC_INH_TRMS (FGAC_INH_FPC | FGAC_INH_DPC |                \
+                       FGAC_INH_SFI | FGAC_INH_SFK | FGAC_INH_SFC | \
+                       FGAC_INH_SDI | FGAC_INH_SDK | FGAC_INH_SDC )               /** Transmission flags **/
 
 /** File permissions **/
 
@@ -97,17 +95,17 @@ extern char fgac_prg_version[];
 #define FGAC_PRM_FCI (1uLL << 11) /** Change permission inheritance of the file **/
 #define FGAC_PRM_FCO (1uLL << 12) /** Chown file (inside group) **/
 #define FGAC_PRM_FCG (1uLL << 13) /** Change owner group **/
-#define FGAC_PRM_FOP (1uLL << 14) /** Chown and chgroup parent dir owner:group **/
+#define FGAC_PRM_FSP (1uLL << 14) /** Chown and chgroup to parent dir owner:group **/
 #define FGAC_PRM_FRM (1uLL << 15) /** Remove file **/
 #define FGAC_PRM_FMV (1uLL << 16) /** Rename file (inside parent directory) **/
 #define FGAC_PRM_FMX (1uLL << 17) /** Modify file extended attributes **/
-#define FGAC_PRM_FSX (1uLL << 17) /** (Un)set file execution for bit for current user **/
+#define FGAC_PRM_FSX (1uLL << 18) /** (Un)set file execution for bit for current user **/
 
 #define FGAC_PRM_FEX (1uLL << 24) /** Execute file **/
 
 #define FGAC_PRM_FREA (FGAC_PRM_FRD | FGAC_PRM_FRA | FGAC_PRM_FRP | FGAC_PRM_FXA | FGAC_PRM_FSL)   /** File read permission **/
 #define FGAC_PRM_FWRI (FGAC_PRM_FWR | FGAC_PRM_FCA | FGAC_PRM_FCP | FGAC_PRM_FCI | FGAC_PRM_FCO | \
-                       FGAC_PRM_FCG | FGAC_PRM_FOP | FGAC_PRM_FRM | FGAC_PRM_FMV | FGAC_PRM_FMX | \
+                       FGAC_PRM_FCG | FGAC_PRM_FSP | FGAC_PRM_FRM | FGAC_PRM_FMV | FGAC_PRM_FMX | \
                        FGAC_PRM_FSX)                                                               /** File write permission **/
 #define FGAC_PRM_FEXE (FGAC_PRM_FEX)                                                               /** File exec permission **/
 #define FGAC_PRM_FILE (FGAC_PRM_FREA | FGAC_PRM_FWRI | FGAC_PRM_FEXE)                              /** File permission **/
@@ -123,36 +121,35 @@ extern char fgac_prg_version[];
 #define FGAC_PRM_DAF (1uLL << 37) /** Create (add) files (mknod), same owner as parent directory's one **/
 #define FGAC_PRM_DAD (1uLL << 38) /** Create (add) subdirectory (mkdir), same owner as parent directory's one **/
 #define FGAC_PRM_DAL (1uLL << 39) /** Create (add) symbolic link in the directory, same owner as parent directory's one **/
-#define FGAC_PRM_DMK (1uLL << 40) /** Create own files (mknod) **/
-#define FGAC_PRM_DMD (1uLL << 41) /** Create own subdirectory (mkdir) **/
-#define FGAC_PRM_DSL (1uLL << 42) /** Create own symbolic link in the directory **/
-#define FGAC_PRM_DCA (1uLL << 43) /** Change attributes (utime) **/
-#define FGAC_PRM_DCP (1uLL << 44) /** Chmod (change permission) directory **/
-#define FGAC_PRM_DCI (1uLL << 45) /** Change permission inheritance rules of the directory **/
-#define FGAC_PRM_DCT (1uLL << 46) /** Change permission transmit rules of the directory **/
-#define FGAC_PRM_DCO (1uLL << 47) /** Chown directory (inside group) **/
-#define FGAC_PRM_DCG (1uLL << 48) /** Change owner group **/
-#define FGAC_PRM_DOP (1uLL << 49) /** Chown and chgroup to parent dir owner:group **/
-#define FGAC_PRM_DRM (1uLL << 50) /** Remove directory **/
-#define FGAC_PRM_DMV (1uLL << 51) /** Rename directory (inside parent directory) **/
-#define FGAC_PRM_DMX (1uLL << 52) /** Modify directory extended attributes **/
-#define FGAC_PRM_DCH (1uLL << 53) /** Create own symbolic device **/
-#define FGAC_PRM_DBL (1uLL << 54) /** Create own block device **/
-#define FGAC_PRM_DSC (1uLL << 55) /** Create own socket **/
-#define FGAC_PRM_DFF (1uLL << 56) /** Create own fifo **/
-#define FGAC_PRM_DAC (1uLL << 57) /** Create (add) symbolic device **/
-#define FGAC_PRM_DAB (1uLL << 58) /** Create (add) block device **/
-#define FGAC_PRM_DAO (1uLL << 59) /** Create (add) socket **/
-#define FGAC_PRM_DAP (1uLL << 60) /** Create (add) fifo **/
+#define FGAC_PRM_DAC (1uLL << 40) /** Create (add) symbolic device **/
+#define FGAC_PRM_DAB (1uLL << 41) /** Create (add) block device **/
+#define FGAC_PRM_DAS (1uLL << 42) /** Create (add) socket **/
+#define FGAC_PRM_DAP (1uLL << 43) /** Create (add) named pipe (fifo) **/
+#define FGAC_PRM_DOF (1uLL << 44) /** Create own files (mknod) **/
+#define FGAC_PRM_DOD (1uLL << 45) /** Create own subdirectory (mkdir) **/
+#define FGAC_PRM_DOL (1uLL << 46) /** Create own symbolic link in the directory **/
+#define FGAC_PRM_DOC (1uLL << 47) /** Create own symbolic device **/
+#define FGAC_PRM_DOB (1uLL << 48) /** Create own block device **/
+#define FGAC_PRM_DOS (1uLL << 49) /** Create own socket **/
+#define FGAC_PRM_DOP (1uLL << 50) /** Create own named pipe fifo **/
+#define FGAC_PRM_DCA (1uLL << 53) /** Change attributes (utime) **/
+#define FGAC_PRM_DCP (1uLL << 54) /** Chmod (change permission) directory **/
+#define FGAC_PRM_DCI (1uLL << 55) /** Change permission inheritance rules of the directory **/
+#define FGAC_PRM_DCT (1uLL << 56) /** Change permission transmit rules of the directory **/
+#define FGAC_PRM_DCO (1uLL << 57) /** Chown directory (inside group) **/
+#define FGAC_PRM_DCG (1uLL << 58) /** Change owner group **/
+#define FGAC_PRM_DSP (1uLL << 59) /** Chown and chgroup to parent dir owner:group **/
+#define FGAC_PRM_DRM (1uLL << 60) /** Remove directory **/
+#define FGAC_PRM_DMV (1uLL << 61) /** Rename directory (inside parent directory) **/
+#define FGAC_PRM_DMX (1uLL << 62) /** Modify directory extended attributes **/
 
 #define FGAC_PRM_DEX (1uLL << 63) /** Execute directory (chdir) **/
 
 #define FGAC_PRM_DREA (FGAC_PRM_DRD | FGAC_PRM_DRA | FGAC_PRM_DRP | FGAC_PRM_DXA)                   /** Directory read permission **/
-#define FGAC_PRM_DWRI (FGAC_PRM_DAF | FGAC_PRM_DAD | FGAC_PRM_DAL | FGAC_PRM_DMK | FGAC_PRM_DMD | \
-                       FGAC_PRM_DSL | FGAC_PRM_DCA | FGAC_PRM_DCP | FGAC_PRM_DCI | \
-                       FGAC_PRM_DCT | FGAC_PRM_DCO | FGAC_PRM_DCG | FGAC_PRM_DOP | FGAC_PRM_DRM | \
-                       FGAC_PRM_DMV | FGAC_PRM_DMX | FGAC_PRM_DCH | FGAC_PRM_DBL | FGAC_PRM_DSC | \
-                       FGAC_PRM_DFF | FGAC_PRM_DAC | FGAC_PRM_DAB | FGAC_PRM_DAO | FGAC_PRM_DAP)    /** Directory write permission **/
+#define FGAC_PRM_DWRI (FGAC_PRM_DAF | FGAC_PRM_DAD | FGAC_PRM_DAL | FGAC_PRM_DAC | FGAC_PRM_DAB | FGAC_PRM_DAS | FGAC_PRM_DAP | \
+                       FGAC_PRM_DOF | FGAC_PRM_DOD | FGAC_PRM_DOL | FGAC_PRM_DOC | FGAC_PRM_DOB | FGAC_PRM_DOS | FGAC_PRM_DOP | \
+                       FGAC_PRM_DCA | FGAC_PRM_DCP | FGAC_PRM_DCI | FGAC_PRM_DCT | FGAC_PRM_DCO | FGAC_PRM_DCG | FGAC_PRM_DSP | \
+                       FGAC_PRM_DRM | FGAC_PRM_DMV | FGAC_PRM_DMX )                               /** Directory write permission **/
 #define FGAC_PRM_DEXE (FGAC_PRM_DEX)                                                                /** Directory exec permission **/
 #define FGAC_PRM_DIRS (FGAC_PRM_DREA | FGAC_PRM_DWRI | FGAC_PRM_DEXE)                               /** Directory permission **/
 
@@ -675,24 +672,24 @@ int fgac_set_mkfile_prm (fgac_state *state, fgac_path *path);
 int fgac_set_mkdir_prm (fgac_state *state, fgac_path *path);
 
 /**
-* @brief      unset inheritance flag (FGAC_INH_INH)
+* @brief      unset file permissions inheritance flag (FGAC_INH_FPI)
 *             and keep (copy) inherited permissions if needed
 * @param[in]  state fgacfs handler
 * @param[in]  path  path to file or directory
 * @return     FGAC_OK (0) on success
 *             fgacfs error code on fail
 */
-int fgac_unset_inh (fgac_state *state, fgac_path *path);
+int fgac_unset_fpi (fgac_state *state, fgac_path *path);
 
 /**
-* @brief      unset dir->file inheritance flag (FGAC_INH_IFP)
+* @brief      unset directory permissions inheritance flag (FGAC_INH_DPI)
 *             and keep (copy) inherited permissions if needed
 * @param[in]  state fgacfs handler
 * @param[in]  path  path to directory
 * @return     FGAC_OK (0) on success
 *             fgacfs error code on fail
 */
-int fgac_unset_ifp (fgac_state *state, fgac_path *path);
+int fgac_unset_dpi (fgac_state *state, fgac_path *path);
 //}
 
 /************************  Misc function  **************************/

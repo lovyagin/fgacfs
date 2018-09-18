@@ -27,10 +27,16 @@ extern char mountpoint[];
 
 void putfifo (fgac_state *state, const char *path)
 {
-    struct stat statbuf;
-    write(state->fd_fifo, path, strlen(path)+1);
-//    printf("%p %s %s (%i)\n", mountpoint, mountpoint, path, (int) rc);
-    if (*mountpoint) lstat(mountpoint, &statbuf);
+    if (state->fd_fifo != -1) 
+    {
+        write(state->fd_fifo, path, strlen(path)+1);
+//        printf("%p %s %s (%i)\n", mountpoint, mountpoint, path, (int) rc);
+        if (*mountpoint) 
+        {
+            struct stat statbuf;
+            lstat(mountpoint, &statbuf);
+        }
+    }
 }
 
 
@@ -141,18 +147,18 @@ int fgacfsctl_get_inh (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
 
     if ((rc = fgac_get_inh (state, &path, &inh))) return rc;
 
-    if      (!strcmp (argv[0], "INH")) inh &= FGAC_INH_INH;
-    else if (!strcmp (argv[0], "SET")) inh &= FGAC_INH_SET;
-    else if (!strcmp (argv[0], "IFP")) inh &= FGAC_INH_IFP;
-    else if (!strcmp (argv[0], "IFS")) inh &= FGAC_INH_IFS;
-    else if (!strcmp (argv[0], "SPI")) inh &= FGAC_INH_SPI;
-    else if (!strcmp (argv[0], "SPS")) inh &= FGAC_INH_SPS;
-    else if (!strcmp (argv[0], "CPR")) inh &= FGAC_INH_CPR;
-    else if (!strcmp (argv[0], "SFP")) inh &= FGAC_INH_SFP;
-    else if (!strcmp (argv[0], "SFS")) inh &= FGAC_INH_SFS;
-    else if (!strcmp (argv[0], "CFP")) inh &= FGAC_INH_CFP;
-    else if (!strcmp (argv[0], "SCP")) inh &= FGAC_INH_SCP;
-    else if (!strcmp (argv[0], "SCF")) inh &= FGAC_INH_SCF;
+    if      (!strcmp (argv[0], "FPI")) inh &= FGAC_INH_FPI;
+    else if (!strcmp (argv[0], "FPK")) inh &= FGAC_INH_FPK;
+    else if (!strcmp (argv[0], "FPC")) inh &= FGAC_INH_FPC;
+    else if (!strcmp (argv[0], "DPI")) inh &= FGAC_INH_DPI;
+    else if (!strcmp (argv[0], "DPK")) inh &= FGAC_INH_DPK;
+    else if (!strcmp (argv[0], "DPC")) inh &= FGAC_INH_DPC;
+    else if (!strcmp (argv[0], "SFI")) inh &= FGAC_INH_SFI;
+    else if (!strcmp (argv[0], "SFK")) inh &= FGAC_INH_SFK;
+    else if (!strcmp (argv[0], "SFC")) inh &= FGAC_INH_SFC;
+    else if (!strcmp (argv[0], "SDI")) inh &= FGAC_INH_SDI;
+    else if (!strcmp (argv[0], "SDK")) inh &= FGAC_INH_SDK;
+    else if (!strcmp (argv[0], "SDC")) inh &= FGAC_INH_SDC;
     else    return FGACFSCTL_ERR_INH;
 
     printf (inh ? "1" : "0");
@@ -189,7 +195,7 @@ int fgacfsctl_get_prmf (const char *source, uint64_t *prm)
     EFPRMGET(FCI)
     EFPRMGET(FCO)
     EFPRMGET(FCG)
-    EFPRMGET(FOP)
+    EFPRMGET(FSP)
     EFPRMGET(FRM)
     EFPRMGET(FMV)
     EFPRMGET(FSX)
@@ -201,27 +207,26 @@ int fgacfsctl_get_prmf (const char *source, uint64_t *prm)
     EFPRMGET(DAF)
     EFPRMGET(DAD)
     EFPRMGET(DAL)
-    EFPRMGET(DMK)
-    EFPRMGET(DMD)
-    EFPRMGET(DSL)
+    EFPRMGET(DAC)
+    EFPRMGET(DAB)
+    EFPRMGET(DAS)
+    EFPRMGET(DAP)
+    EFPRMGET(DOF)
+    EFPRMGET(DOD)
+    EFPRMGET(DOL)
+    EFPRMGET(DOC)
+    EFPRMGET(DOB)
     EFPRMGET(DCA)
     EFPRMGET(DCP)
     EFPRMGET(DCI)
     EFPRMGET(DCT)
     EFPRMGET(DCO)
     EFPRMGET(DCG)
-    EFPRMGET(DOP)
+    EFPRMGET(DSP)
     EFPRMGET(DRM)
+    EFPRMGET(DMV)
     EFPRMGET(DMX)
     EFPRMGET(DEX)
-    EFPRMGET(DCH)
-    EFPRMGET(DBL)
-    EFPRMGET(DSC)
-    EFPRMGET(DFF)
-    EFPRMGET(DAC)
-    EFPRMGET(DAB)
-    EFPRMGET(DAO)
-    EFPRMGET(DAP)
     else    return FGACFSCTL_ERR_PFL;
     return FGAC_OK;
 
@@ -427,31 +432,28 @@ int fgacfsctl_set_inh (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
 
     if ((rc = fgac_get_inh (state, &path, &cinh))) return rc;
 
-    if      (!strcmp (argv[0], "INH")) inh = FGAC_INH_INH;
-    else if (!strcmp (argv[0], "SET")) inh = FGAC_INH_SET;
-    else if (!strcmp (argv[0], "IFP")) inh = FGAC_INH_IFP;
-    else if (!strcmp (argv[0], "IFS")) inh = FGAC_INH_IFS;
-    else if (!strcmp (argv[0], "SPI")) inh = FGAC_INH_SPI;
-    else if (!strcmp (argv[0], "SPS")) inh = FGAC_INH_SPS;
-    else if (!strcmp (argv[0], "CPR")) inh = FGAC_INH_CPR;
-    else if (!strcmp (argv[0], "SFP")) inh = FGAC_INH_SFP;
-    else if (!strcmp (argv[0], "SFS")) inh = FGAC_INH_SFS;
-    else if (!strcmp (argv[0], "CFP")) inh = FGAC_INH_CFP;
-    else if (!strcmp (argv[0], "SCP")) inh = FGAC_INH_SCP;
-    else if (!strcmp (argv[0], "SCF")) inh = FGAC_INH_SCF;
+    if      (!strcmp (argv[0], "FPI")) inh = FGAC_INH_FPI;
+    else if (!strcmp (argv[0], "FPK")) inh = FGAC_INH_FPK;
+    else if (!strcmp (argv[0], "FPC")) inh = FGAC_INH_FPC;
+    else if (!strcmp (argv[0], "DPI")) inh = FGAC_INH_DPI;
+    else if (!strcmp (argv[0], "DPK")) inh = FGAC_INH_DPK;
+    else if (!strcmp (argv[0], "DPC")) inh = FGAC_INH_DPC;
+    else if (!strcmp (argv[0], "SFI")) inh = FGAC_INH_SFI;
+    else if (!strcmp (argv[0], "SFK")) inh = FGAC_INH_SFK;
+    else if (!strcmp (argv[0], "SFC")) inh = FGAC_INH_SFC;
+    else if (!strcmp (argv[0], "SDI")) inh = FGAC_INH_SDI;
+    else if (!strcmp (argv[0], "SDK")) inh = FGAC_INH_SDK;
+    else if (!strcmp (argv[0], "SDC")) inh = FGAC_INH_SDC;
     else    return FGACFSCTL_ERR_INH;
 
     if (!fgac_check_prm2(state, &path, prc, FGAC_PRM_FCI, inh & FGAC_INH_TRMS ? FGAC_PRM_DCT : FGAC_PRM_DCI)) return FGACFSCTL_ERR_PRM;
 
     if (!fgac_is_dir (state, &path) && (inh & FGAC_INH_DIRS)) return FGACFSCTL_ERR_DFI;
 
-    if      (!val && inh == FGAC_INH_INH && (cinh & FGAC_INH_INH)) return fgac_unset_inh (state, &path);
-    else if (!val && inh == FGAC_INH_IFP && (cinh & FGAC_INH_IFP)) return fgac_unset_ifp (state, &path);
-    else 
-    {
-        putfifo(state, path.path);
-        return fgac_set_inh(state, &path, val ? cinh | inh : cinh & ~inh);
-    }
+    putfifo(state, path.path);
+    if      (!val && inh == FGAC_INH_FPI && (cinh & FGAC_INH_FPI)) return fgac_unset_fpi (state, &path);
+    else if (!val && inh == FGAC_INH_DPI && (cinh & FGAC_INH_DPI)) return fgac_unset_dpi (state, &path);
+    else                                                           return fgac_set_inh(state, &path, val ? cinh | inh : cinh & ~inh);
 
 }
 
@@ -479,7 +481,7 @@ int fgacfsctl_set_uid (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
         if (!fgac_parent(&path, &parent)) return FGACFSCTL_ERR_PRM;
 
         if ((rc == fgac_get_owner(state, &parent, &puid))) return rc;
-        if (puid != uid || !fgac_check_prm2(state, &path, prc, FGAC_PRM_FOP, FGAC_PRM_DOP)) return FGACFSCTL_ERR_PRM;
+        if (puid != uid || !fgac_check_prm2(state, &path, prc, FGAC_PRM_FSP, FGAC_PRM_DSP)) return FGACFSCTL_ERR_PRM;
     }
 
     putfifo(state, path.path);
@@ -513,7 +515,7 @@ int fgacfsctl_set_gid (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
         if (!fgac_parent(&path, &parent)) return FGACFSCTL_ERR_PRM;
 
         if ((rc == fgac_get_group (state, &parent, &pgid))) return rc;
-        if (pgid != gid || !fgac_check_prm2(state, &path, prc, FGAC_PRM_FOP, FGAC_PRM_DOP)) return FGACFSCTL_ERR_PRM;
+        if (pgid != gid || !fgac_check_prm2(state, &path, prc, FGAC_PRM_FSP, FGAC_PRM_DSP)) return FGACFSCTL_ERR_PRM;
     }
 
     putfifo(state, path.path);
@@ -588,23 +590,25 @@ void fgacfsctl_show_inhs (uint64_t inh, int isdir)
 {
     printf("INHERITANCE:\t");
 
-    SHOW_INH(INH)
-    SHOW_INH(SET)
+    SHOW_INH(FPI)
+    SHOW_INH(FPK)
 
     if (isdir)
     {
-        SHOW_INH(IFP)
-        SHOW_INH(IFS)
+        SHOW_INH(DPI)
+	SHOW_INH(DPK)
         printf ("\tTRANSMISSION:\t");
 
-        SHOW_INH(SPI)
-        SHOW_INH(SPS)
-        SHOW_INH(CPR)
-        SHOW_INH(SCP)
-        SHOW_INH(SFP)
-        SHOW_INH(SFS)
-        SHOW_INH(CFP)
-        SHOW_INH(SCF)
+        SHOW_INH(FPC)
+        SHOW_INH(DPC)
+        printf ("\tINCL. INH FLAG SET:\t");
+        
+        SHOW_INH(SFI)
+        SHOW_INH(SFK)
+        SHOW_INH(SDI)
+        SHOW_INH(SDK)
+        SHOW_INH(SFC)
+        SHOW_INH(SDC)
     }
     printf ("\n");
 }
@@ -624,7 +628,7 @@ void fgacfsctl_show_inhs (uint64_t inh, int isdir)
         SHOW_PRM(SRC,FCI)  \
         SHOW_PRM(SRC,FCO)  \
         SHOW_PRM(SRC,FCG)  \
-        SHOW_PRM(SRC,FOP)  \
+        SHOW_PRM(SRC,FSP)  \
         SHOW_PRM(SRC,FRM)  \
         SHOW_PRM(SRC,FMV)  \
         SHOW_PRM(SRC,FMX)  \
@@ -644,22 +648,22 @@ void fgacfsctl_show_inhs (uint64_t inh, int isdir)
         SHOW_PRM(SRC,DAL)  \
         SHOW_PRM(SRC,DAC)  \
         SHOW_PRM(SRC,DAB)  \
-        SHOW_PRM(SRC,DAO)  \
+        SHOW_PRM(SRC,DAS)  \
         SHOW_PRM(SRC,DAP)  \
-        SHOW_PRM(SRC,DMK)  \
-        SHOW_PRM(SRC,DMD)  \
-        SHOW_PRM(SRC,DSL)  \
-        SHOW_PRM(SRC,DCH)  \
-        SHOW_PRM(SRC,DBL)  \
-        SHOW_PRM(SRC,DSC)  \
-        SHOW_PRM(SRC,DFF)  \
+        SHOW_PRM(SRC,DOF)  \
+        SHOW_PRM(SRC,DOD)  \
+        SHOW_PRM(SRC,DOL)  \
+        SHOW_PRM(SRC,DOC)  \
+        SHOW_PRM(SRC,DOB)  \
+        SHOW_PRM(SRC,DOS)  \
+        SHOW_PRM(SRC,DOP)  \
         SHOW_PRM(SRC,DCA)  \
         SHOW_PRM(SRC,DCP)  \
         SHOW_PRM(SRC,DCI)  \
         SHOW_PRM(SRC,DCT)  \
         SHOW_PRM(SRC,DCO)  \
         SHOW_PRM(SRC,DCG)  \
-        SHOW_PRM(SRC,DOP)  \
+        SHOW_PRM(SRC,DSP)  \
         SHOW_PRM(SRC,DRM)  \
         SHOW_PRM(SRC,DMV)  \
         SHOW_PRM(SRC,DMX)  \
