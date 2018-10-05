@@ -78,6 +78,8 @@
     "\tFMX\t(W) Modify file extended attributes\n"
     "\tFSX\t(W) (Un)set file execution for bit for current user\n"
     "\tFEX\t(X) execute file (affects STAT only, the rest controlled via POSIX)\n"
+    "\tFSU\t(X) setuid file (affects STAT only, the rest controlled via POSIX)\n"
+    "\tFSG\t(X) setgid file (affects STAT only, the rest controlled via POSIX)\n"
     "Directory permissions flags:\n"
     "\tDRD\t(R) read directory context\n"
     "\tDRA\t(R) stat directory (read attributes)\n"

@@ -200,6 +200,8 @@ int fgacfsctl_get_prmf (const char *source, uint64_t *prm)
     EFPRMGET(FMV)
     EFPRMGET(FSX)
     EFPRMGET(FEX)
+    EFPRMGET(FSU)
+    EFPRMGET(FSG)
     EFPRMGET(DRD)
     EFPRMGET(DRA)
     EFPRMGET(DRP)
@@ -634,7 +636,9 @@ void fgacfsctl_show_inhs (uint64_t inh, int isdir)
         SHOW_PRM(SRC,FMX)  \
         SHOW_PRM(SRC,FSX)  \
         printf ("X: ");    \
-        SHOW_PRM(SRC,FEX)
+        SHOW_PRM(SRC,FEX)  \
+        SHOW_PRM(SRC,FSU)  \
+        SHOW_PRM(SRC,FSG)  
 
 #define SHOW_DIR_PRMS(SRC) \
         printf ("R: ");    \

@@ -83,6 +83,10 @@ int str_to_int (const char *str, unsigned long *value)
 int main(int argc, char *argv[])
 {
 
+#ifndef NDEBUG
+    int i;
+    for (i=0; i<argc; i++) printf("%i: %s\n", i,argv[i]);
+#endif
 
     struct fuse_operations *fgacfs_ops = calloc (sizeof (struct fuse_operations), 1);
 
@@ -90,7 +94,7 @@ int main(int argc, char *argv[])
 
     fgac_state *state;
     
-    int oro=0, osuid=0, odev=1, oexec=1, oatime=1, dio=0, osc=1;
+    int oro=0, osuid=0, odev=0, oexec=1, oatime=1, dio=0, osc=1;
     char oplist[FGAC_LIMIT_PATH];
     
     
@@ -113,22 +117,43 @@ int main(int argc, char *argv[])
     }
     else if (argc == 4)
     {
-        if (argv[1][0] != '-' &&
-            argv[1][1] != 'o'
-           ) USAGE
-        OPT_PARSE(argv[1]+2);
-        hostdir      = realpath(argv[2], NULL);
-        mountdir     = realpath(argv[3], NULL);
-        fuse_args[4] = argv[3];
+        if (argv[1][0] == '-' &&
+            argv[1][1] == 'o'
+           ) 
+        {
+            OPT_PARSE(argv[1]+2);
+            hostdir      = realpath(argv[2], NULL);
+            mountdir     = realpath(argv[3], NULL);
+            fuse_args[4] = argv[3];
+        }
+        else if (argv[3][0] == '-' &&
+                 argv[3][1] == 'o'
+                ) 
+        {
+            OPT_PARSE(argv[3]+2);
+            hostdir      = realpath(argv[1], NULL);
+            mountdir     = realpath(argv[2], NULL);
+            fuse_args[4] = argv[2];
+        }
+        else USAGE
     }
     else if (argc == 5)
     {
-        if (strcmp (argv[1], "-o")) USAGE
-        OPT_PARSE(argv[2]);
-        hostdir      = realpath(argv[3], NULL);
-        mountdir     = realpath(argv[4], NULL);
-        fuse_args[4] = argv[4];
-
+        if (!strcmp (argv[1], "-o"))
+        {
+            OPT_PARSE(argv[2]);
+            hostdir      = realpath(argv[3], NULL);
+            mountdir     = realpath(argv[4], NULL);
+            fuse_args[4] = argv[4];
+        }
+        else if (!strcmp (argv[3], "-o"))
+        {
+            OPT_PARSE(argv[4]);
+            hostdir      = realpath(argv[1], NULL);
+            mountdir     = realpath(argv[2], NULL);
+            fuse_args[4] = argv[2];
+        }
+        else USAGE
     }
     else USAGE
 
@@ -141,7 +166,8 @@ int main(int argc, char *argv[])
     fuse_args[6] = "-f";
 #endif // NDEBUG
 
-    if(snprintf(oplist, FGAC_LIMIT_PATH, "allow_other,auto_unmount,hard_remove,%s,%s,%s,%s,%s,fsname=%s",
+    if(snprintf(oplist, FGAC_LIMIT_PATH, "allow_other,%shard_remove,%s,%s,%s,%s,%s,fsname=%s",
+                !odev && !osuid ? "auto_unmount," : "",
                 oro     ? "ro"     : "rw",
                 osuid   ? "suid"   : "nosuid", 
                 odev    ? "dev"    : "nodev",
@@ -149,6 +175,9 @@ int main(int argc, char *argv[])
                 oatime  ? "atime"  : "noatime",
                 hostdir
                )  >= FGAC_LIMIT_PATH) {fgac_put_msg(FGAC_ERR_PATH); return 5;}
+#ifndef NDEBUG    
+    printf("%s\n", oplist);
+#endif    
     
     if (!mountdir) 
     {
@@ -206,6 +235,11 @@ int main(int argc, char *argv[])
 /*    fgacfs_ops->create      = fgacfs_create;   */
     fgacfs_ops->ftruncate   = fgacfs_ftruncate;
     fgacfs_ops->fgetattr    = fgacfs_fgetattr;
+
+#ifndef NDEBUG    
+    printf("%s\n", fuse_args[3]);
+#endif    
+
 
     rc = fuse_main(
 #ifndef NDEBUG

@@ -161,8 +161,11 @@ printf("2\n");\
 
 
 #define ADD_ORD_PRM_FILE                                 \
-    if (!fgac_check_inh(state, parent, FGAC_INH_FPI) &&  \
-        !fgac_check_inh(state, parent, FGAC_INH_FPC)     \
+    if (                                                 \
+        (!fgac_check_inh(state, parent, FGAC_INH_FPI) && \
+         !fgac_check_inh(state, parent, FGAC_INH_FPC)    \
+        ) ||                                             \
+        fgac_check_prm(state, path, prc, FGAC_PRM_FCP)   \
        )                                                 \
     {                                                    \
         fgac_prm fgacprm, *prm = &fgacprm;               \
@@ -184,11 +187,22 @@ printf("2\n");\
                                                          \
         prm->cat   = FGAC_CAT_OTH;                       \
         ADD_ORD_PRM_SINGLE(OTH,F)                        \
+                                                         \
+        prm->cat   = FGAC_CAT_ALL;                       \
+        prm->allow = prm->deny = 0;                      \
+        if (S_ISUID & stat->st_mode)                     \
+            prm->allow |= FGAC_PRM_FSU;                  \
+        if (S_ISGID & stat->st_mode)                     \
+            prm->allow |= FGAC_PRM_FSG;                  \
+        fgac_set_prm(state, path, prm);                  \
     }
 
 #define ADD_ORD_PRM_DIRS                                 \
-    if (!fgac_check_inh(state, parent, FGAC_INH_DPI) &&  \
-        !fgac_check_inh(state, parent, FGAC_INH_DPC)     \
+    if (                                                 \
+        (!fgac_check_inh(state, parent, FGAC_INH_DPI) && \
+         !fgac_check_inh(state, parent, FGAC_INH_DPC)    \
+        ) ||                                             \
+        fgac_check_prm(state, path, prc, FGAC_PRM_DCP)   \
        )                                                 \
     {                                                    \
         fgac_prm fgacprm, *prm = &fgacprm;               \
@@ -214,8 +228,11 @@ printf("2\n");\
 
 
 #define ADD_ORD_PRM_SL                                   \
-    if (!fgac_check_inh(state, parent, FGAC_INH_FPI) &&  \
-        !fgac_check_inh(state, parent, FGAC_INH_FPC)     \
+    if (                                                 \
+        (!fgac_check_inh(state, parent, FGAC_INH_FPI) && \
+         !fgac_check_inh(state, parent, FGAC_INH_FPC)    \
+        ) ||                                             \
+        fgac_check_prm(state, path, prc, FGAC_PRM_FCP)   \
        )                                                 \
     {                                                    \
         fgac_prm fgacprm, *prm = &fgacprm;               \
@@ -293,7 +310,7 @@ printf("2\n");\
 
 int fgacfs_add(const char  *rpath,
                struct stat *stat,
-               fgac_path     *source,
+               fgac_path   *source,
                const char  *target
               )
 {
@@ -307,7 +324,7 @@ int fgacfs_add(const char  *rpath,
     if (!parent) return -EACCES;
     pprm = fgac_check_prms(state, parent, prc, 1);
 
-    hostmode &= ~(S_IRWXG | S_IRWXO);
+    hostmode &= ~((mode_t) 07777);
     hostmode |= S_IRWXU;
 
     if (S_ISREG(stat->st_mode))
@@ -511,10 +528,10 @@ int fgacfs_chmod (const char *rpath, mode_t mode)
     struct stat *stat;
     fgac_prc prc2;
     fgac_prm prm;
-    uint64_t r, w, x;
+    uint64_t r, w, x, u, g;
     int isdir;
-    unsigned sur, suw, sux, sgr, sgw, sgx, sor, sow, sox,
-             dur, duw, dux, dgr, dgw, dgx, dor, dow, dox;
+    unsigned sur, suw, sux, sgr, sgw, sgx, sor, sow, sox, ssu, ssg,
+             dur, duw, dux, dgr, dgw, dgx, dor, dow, dox, dsu, dsg;
     FGACFS_INIT
     FGACFS_EXISTS
 
@@ -528,7 +545,9 @@ int fgacfs_chmod (const char *rpath, mode_t mode)
 
     r = isdir ? FGAC_PRM_DREA : FGAC_PRM_FREA;
     w = isdir ? FGAC_PRM_DWRI : FGAC_PRM_FWRI;
-    x = isdir ? FGAC_PRM_DEXE : FGAC_PRM_FEXE;
+    x = isdir ? FGAC_PRM_DEX  : FGAC_PRM_FEX;
+    u = isdir ? 0             : FGAC_PRM_FSU;
+    g = isdir ? 0             : FGAC_PRM_FSG;
 
     sur = mode & S_IRUSR;
     suw = mode & S_IWUSR;
@@ -541,6 +560,9 @@ int fgacfs_chmod (const char *rpath, mode_t mode)
     sor = mode & S_IROTH;
     sow = mode & S_IWOTH;
     sox = mode & S_IXOTH;
+    
+    ssu = mode & S_ISUID;
+    ssg = mode & S_ISGID;
 
 
     dur = (stat->st_mode & S_IRUSR) != sur;
@@ -554,6 +576,9 @@ int fgacfs_chmod (const char *rpath, mode_t mode)
     dor = (stat->st_mode & S_IROTH) != sor;
     dow = (stat->st_mode & S_IWOTH) != sow;
     dox = (stat->st_mode & S_IXOTH) != sox;
+
+    dsu = (stat->st_mode & S_ISUID) != ssu;
+    dsg = (stat->st_mode & S_ISGID) != ssg;
 
     if ((isdir && fgac_check_prm(state, path, prc, FGAC_PRM_DCP)) || (!isdir && fgac_check_prm(state, path, prc, FGAC_PRM_FCP)))
     {
@@ -602,6 +627,17 @@ int fgacfs_chmod (const char *rpath, mode_t mode)
             CHMOD_CATCH(o,x);
             if (fgac_set_prm(state, path, &prm)) return -EACCES;
         }
+        
+        if (dsu || dsg)
+        {
+            prm.cat = FGAC_CAT_UID;
+            prm.prc.uid = prc->uid;
+            if (fgac_get_prm(state, path, &prm)) return -EACCES;
+            CHMOD_CATCH(s,u);
+            CHMOD_CATCH(s,g);
+            if (fgac_set_prm(state, path, &prm)) return -EACCES;        
+        }
+        
     }
     else if (!isdir && fgac_check_prm(state, path, prc, FGAC_PRM_FSX))
     {
@@ -713,7 +749,7 @@ int fgacfs_open (const char *rpath, struct fuse_file_info *fi)
     FGACFS_EXISTS
 
     if (fi->flags & O_RDONLY || fi->flags & O_RDWR || !(fi->flags & O_WRONLY)) FGACFS_PRM(FRD);
-    if (fi->flags & O_WRONLY || fi->flags & O_RDWR || !(fi->flags & O_RDONLY)) FGACFS_PRM(FWR);
+    if (fi->flags & O_WRONLY || fi->flags & O_RDWR                           ) FGACFS_PRM(FWR);
 
     FGACFS_HOSTPATH
 

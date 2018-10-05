@@ -102,13 +102,16 @@ extern char fgac_prg_version[];
 #define FGAC_PRM_FSX (1uLL << 18) /** (Un)set file execution for bit for current user **/
 
 #define FGAC_PRM_FEX (1uLL << 24) /** Execute file **/
+#define FGAC_PRM_FSU (1uLL << 25) /** Setuid file **/
+#define FGAC_PRM_FSG (1uLL << 26) /** Setgid file **/
 
 #define FGAC_PRM_FREA (FGAC_PRM_FRD | FGAC_PRM_FRA | FGAC_PRM_FRP | FGAC_PRM_FXA | FGAC_PRM_FSL)   /** File read permission **/
 #define FGAC_PRM_FWRI (FGAC_PRM_FWR | FGAC_PRM_FCA | FGAC_PRM_FCP | FGAC_PRM_FCI | FGAC_PRM_FCO | \
                        FGAC_PRM_FCG | FGAC_PRM_FSP | FGAC_PRM_FRM | FGAC_PRM_FMV | FGAC_PRM_FMX | \
                        FGAC_PRM_FSX)                                                               /** File write permission **/
 #define FGAC_PRM_FEXE (FGAC_PRM_FEX)                                                               /** File exec permission **/
-#define FGAC_PRM_FILE (FGAC_PRM_FREA | FGAC_PRM_FWRI | FGAC_PRM_FEXE)                              /** File permission **/
+#define FGAC_PRM_SUGI (FGAC_PRM_FSU | FGAC_PRM_FSG)                                                /** Setuid and Setgid */
+#define FGAC_PRM_FILE (FGAC_PRM_FREA | FGAC_PRM_FWRI | FGAC_PRM_FEXE | FGAC_PRM_SUGI)              /** File permission **/
 
 
 /** Directory permissions **/

@@ -508,7 +508,7 @@ int fgac_adjust_mode_inh (fgac_state *state, fgac_path *path, const fgac_prc *pr
 {
     uint64_t rp = fgac_is_dir(state, path) ? FGAC_PRM_DREA : FGAC_PRM_FREA,
              wp = fgac_is_dir(state, path) ? FGAC_PRM_DWRI : FGAC_PRM_FWRI,
-             xp = fgac_is_dir(state, path) ? FGAC_PRM_DEXE : FGAC_PRM_FEXE,
+             xp = fgac_is_dir(state, path) ? FGAC_PRM_DEX  : FGAC_PRM_FEX,
              r, w, x,
              prm;
 
@@ -655,6 +655,12 @@ int fgac_adjust_mode (fgac_state *state, fgac_path *path, const fgac_prc *prc)
             if (S_ISDIR(path->statbuf.st_mode)) path->statbuf.st_mode |= S_IXOTH;
         }
     }
+    
+    if (!S_ISDIR(path->statbuf.st_mode))
+    {
+        if (fgac_check_dex(state, path, prc) && fgac_check_inh_prm(state, path, prc, FGAC_PRM_FSU)) path->statbuf.st_mode |= S_ISUID;
+        if (fgac_check_dex(state, path, prc) && fgac_check_inh_prm(state, path, prc, FGAC_PRM_FSG)) path->statbuf.st_mode |= S_ISGID;
+    }    
     
     cache_set_mode(state, path, prc, path->statbuf.st_mode);
 
