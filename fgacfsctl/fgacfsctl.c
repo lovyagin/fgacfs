@@ -189,7 +189,9 @@ int fgacfsctl_get_prmf (const char *source, uint64_t *prm)
     EFPRMGET(FRP)
     EFPRMGET(FXA)
     EFPRMGET(FSL)
-    EFPRMGET(FWR)
+    EFPRMGET(FRW)
+    EFPRMGET(FAP)
+    EFPRMGET(FTR)
     EFPRMGET(FCA)
     EFPRMGET(FCP)
     EFPRMGET(FCI)
@@ -624,7 +626,9 @@ void fgacfsctl_show_inhs (uint64_t inh, int isdir)
         SHOW_PRM(SRC,FXA)  \
         SHOW_PRM(SRC,FSL)  \
         printf ("W: ");    \
-        SHOW_PRM(SRC,FWR)  \
+        SHOW_PRM(SRC,FRW)  \
+        SHOW_PRM(SRC,FAP)  \
+        SHOW_PRM(SRC,FTR)  \
         SHOW_PRM(SRC,FCA)  \
         SHOW_PRM(SRC,FCP)  \
         SHOW_PRM(SRC,FCI)  \

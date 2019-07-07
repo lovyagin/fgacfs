@@ -663,6 +663,23 @@ int fgac_adjust_mode (fgac_state *state, fgac_path *path, const fgac_prc *prc)
     }    
     
     cache_set_mode(state, path, prc, path->statbuf.st_mode);
+    
+    if (prc->uid == 0)
+    {
+        fgac_prms prms = fgac_get_allprms (state, path);
+        if (!fgac_prms_is_error(&prms))
+        {
+            size_t i;
+            for (i = 0; i < fgac_prms_size(&prms); ++i)
+            {
+                 if (fgac_prms_get(&prms, i)->allow & FGAC_PRM_FEX) 
+                 {
+                     path->statbuf.st_mode |= S_IXOTH;
+                 }
+            }
+            fgac_prms_free(&prms);
+        }
+    }
 
 
     return 0;

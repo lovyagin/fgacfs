@@ -111,7 +111,7 @@ int fgacfs_readlink (const char *rpath, char *buffer, size_t s)
 
 #define CHECK_OWN(t)                         \
     if      (pprm & FGAC_PRM_DO##t) own = 1; \
-    else if (pprm & FGAC_PRM_DO##t) own = 0; \
+    else if (pprm & FGAC_PRM_DA##t) own = 0; \
     else return -EACCES;
 
 #define ADD(addf,rmf)                            \
@@ -331,11 +331,11 @@ int fgacfs_add(const char  *rpath,
     {
         int fd;
         
-/*
+
 #ifndef NDEBUG
-        printf("pprm %llX DMK %llX DAF %llX DMK %llX\n", pprm, pprm & FGAC_PRM_DMK, pprm & FGAC_PRM_DAF, FGAC_PRM_DMK);
+        printf("pprm %llX DOF %llX DAF %llX DOF %llX\n", pprm, pprm & FGAC_PRM_DOF, pprm & FGAC_PRM_DAF, FGAC_PRM_DOF);
 #endif        
-*/
+
         
         CHECK_OWN(F)
 
@@ -727,10 +727,21 @@ int fgacfs_truncate (const char *rpath, off_t newsize)
 {
     FGACFS_INIT
     FGACFS_EXISTS
-    FGACFS_PRM(FWR)
+/*    FGACFS_PRM(FWR) */
     FGACFS_HOSTPATH
+    
+#ifndef NDEBUG
+    printf ("TRUNCATE %s to %li\n", rpath, (long int) newsize);
+#endif    
 
-    FGACFS_RETCALL(truncate(hostpath, newsize))
+    struct stat st;
+    if (lstat (hostpath, &st)) return -errno;
+    
+    if ((st.st_size > newsize && !fgac_check_prm(state, path, prc, FGAC_PRM_FTR)) ||
+        (st.st_size < newsize && !fgac_check_prm(state, path, prc, FGAC_PRM_FAP))
+       ) return -EACCES;
+    
+    FGACFS_RETCALL(truncate(hostpath, newsize));
 }
 
 int fgacfs_utime (const char *rpath, struct utimbuf *ubuf)
@@ -743,33 +754,85 @@ int fgacfs_utime (const char *rpath, struct utimbuf *ubuf)
     FGACFS_RETCALL(utime(hostpath, ubuf))
 }
 
+typedef struct fgacfs_fh
+{
+    int fh;
+    int rw, ap, tr;  /* NO rewrite, NO append, NO truncate */
+} fgacfs_fh;
+
+#define FH (((fgacfs_fh *)(long)(fi->fh))->fh)
+#define RW (((fgacfs_fh *)(long)(fi->fh))->rw)
+#define AP (((fgacfs_fh *)(long)(fi->fh))->ap)
+#define TR (((fgacfs_fh *)(long)(fi->fh))->tr)
+
 int fgacfs_open (const char *rpath, struct fuse_file_info *fi)
 {
     FGACFS_INIT
     FGACFS_EXISTS
-
-    if (fi->flags & O_RDONLY || fi->flags & O_RDWR || !(fi->flags & O_WRONLY)) FGACFS_PRM(FRD);
-    if (fi->flags & O_WRONLY || fi->flags & O_RDWR                           ) FGACFS_PRM(FWR);
-
     FGACFS_HOSTPATH
+    
+#ifndef NDEBUG
+    printf ("OPEN %s WR=%i RW=%i AP=%i TR=%i\n", rpath, (fi->flags & O_WRONLY) == O_WRONLY,
+                                                        (fi->flags & O_RDWR) == O_RDWR,
+                                                        (fi->flags & O_APPEND) == O_APPEND,
+                                                        (fi->flags & O_TRUNC) == O_TRUNC     );
+#endif    
+    fi->fh = (uint64_t) (long) malloc (sizeof(fgacfs_fh));
+    if (!fi->fh) return -ENOMEM;
+    if (fi->flags & O_RDONLY || fi->flags & O_RDWR || !(fi->flags & O_WRONLY)) FGACFS_PRM(FRD);
+    if (fi->flags & O_WRONLY || fi->flags & O_RDWR                           ) 
+    {
+        RW = !fgac_check_prm(state, path, prc, FGAC_PRM_FRW);
+        AP = !fgac_check_prm(state, path, prc, FGAC_PRM_FAP);
+        TR = !fgac_check_prm(state, path, prc, FGAC_PRM_FTR);
+        
+        if (RW && AP) return -EACCES;
+
+        if (fi->flags & O_TRUNC)
+        {
+            struct stat st;
+            if (!lstat (hostpath, &st) && st.st_size && TR) return -EACCES;            
+        }
+    }
+
 
     FGACFS_FAILCALL(open(hostpath, fi->flags))
     
-    fi->fh        = rc;
-    fi->direct_io = state->dio;    
+    FH = rc;
+    
+    fi->direct_io = state->dio;
     return 0;
 }
 
 int fgacfs_read (const char *rpath, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
     (void) rpath;
-    return pread(fi->fh, buf, size, offset);
+    return pread(FH, buf, size, offset);
+}
+
+off_t fsize (int fd)
+{
+    struct stat st;
+    if (fstat(fd, &st)) return -errno;
+    return st.st_size;
 }
 
 int fgacfs_write (const char *rpath, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
     (void) rpath;
-    return pwrite(fi->fh, buf, size, offset);
+
+#ifndef NDEBUG
+    printf ("WRITE to %s of size=%li offset=%li DIO=%i\n", rpath, (long int) fsize(FH), (long int) offset, fi->direct_io);
+#endif
+
+    off_t fs = fsize(FH);
+    if (fs < 0) return -errno;
+    
+    if ((RW && offset < fs) ||
+        (AP && offset + size >= fs)
+       ) return -EACCES;
+
+    return pwrite(FH, buf, size, offset);
 }
 
 int fgacfs_statfs (const char *rpath, struct statvfs *statv)
@@ -790,7 +853,10 @@ int fgacfs_flush (const char *rpath, struct fuse_file_info *fi)
 int fgacfs_release (const char *rpath, struct fuse_file_info *fi)
 {
     (void) rpath;
-    FGACFS_RETCALL(close(fi->fh));
+    int rc = close(FH); 
+    if (rc < 0) return -errno;
+    free ((void*)(long) fi->fh);
+    return 0;
 }
 
 int fgacfs_fsync (const char *rpath, int datasync, struct fuse_file_info *fi)
@@ -799,10 +865,10 @@ int fgacfs_fsync (const char *rpath, int datasync, struct fuse_file_info *fi)
     (void) datasync;
 #ifdef HAVE_FDATASYNC
     if (datasync)
-        FGACFS_RETCALL(fdatasync(fi->fh))
+        FGACFS_RETCALL(fdatasync(FH))
     else
 #endif
-	FGACFS_RETCALL(fsync(fi->fh))
+	FGACFS_RETCALL(fsync(FH))
 
 }
 
@@ -969,7 +1035,21 @@ int fgacfs_access (const char *rpath, int mode)
 int fgacfs_ftruncate (const char *rpath, off_t offset, struct fuse_file_info *fi)
 {
     (void) rpath;
-    FGACFS_RETCALL(ftruncate(fi->fh, offset));
+    
+#ifndef NDEBUG
+    printf ("FTRUNCATE %s to %li\n", rpath, (long int) offset);
+#endif    
+    
+    if (TR || AP)
+    {
+        off_t fs = fsize(FH);
+        if (fs < 0) return -errno;
+        if ((TR && fs > offset) ||
+            (AP && fs < offset)
+           ) return -EACCES;
+    }
+    
+    FGACFS_RETCALL(ftruncate(FH, offset));
 }
 
 int fgacfs_fgetattr (const char *rpath, struct stat *statbuf, struct fuse_file_info *fi)

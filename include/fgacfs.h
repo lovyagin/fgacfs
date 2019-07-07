@@ -89,7 +89,9 @@ extern char fgac_prg_version[];
 #define FGAC_PRM_FXA (1uLL <<  3) /** Read file extended attributes **/
 #define FGAC_PRM_FSL (1uLL <<  4) /** Read (follow) symlink **/
 
-#define FGAC_PRM_FWR (1uLL <<  8) /** Write to file (modify) **/
+#define FGAC_PRM_FRW (1uLL <<  8) /** ReWrite file (modify existing content, no append) **/
+#define FGAC_PRM_FAP (1uLL << 19) /** Append to file (write to the end) **/
+#define FGAC_PRM_FTR (1uLL << 20) /** Truncate (reduce file size, enlarging affected by FAP **/
 #define FGAC_PRM_FCA (1uLL <<  9) /** Change attributes (utime) **/
 #define FGAC_PRM_FCP (1uLL << 10) /** Chmod (change permission) file **/
 #define FGAC_PRM_FCI (1uLL << 11) /** Change permission inheritance of the file **/
@@ -106,9 +108,9 @@ extern char fgac_prg_version[];
 #define FGAC_PRM_FSG (1uLL << 26) /** Setgid file **/
 
 #define FGAC_PRM_FREA (FGAC_PRM_FRD | FGAC_PRM_FRA | FGAC_PRM_FRP | FGAC_PRM_FXA | FGAC_PRM_FSL)   /** File read permission **/
-#define FGAC_PRM_FWRI (FGAC_PRM_FWR | FGAC_PRM_FCA | FGAC_PRM_FCP | FGAC_PRM_FCI | FGAC_PRM_FCO | \
+#define FGAC_PRM_FWRI (FGAC_PRM_FRW | FGAC_PRM_FCA | FGAC_PRM_FCP | FGAC_PRM_FCI | FGAC_PRM_FCO | \
                        FGAC_PRM_FCG | FGAC_PRM_FSP | FGAC_PRM_FRM | FGAC_PRM_FMV | FGAC_PRM_FMX | \
-                       FGAC_PRM_FSX)                                                               /** File write permission **/
+                       FGAC_PRM_FSX | FGAC_PRM_FAP | FGAC_PRM_FTR )                                /** File write permission **/
 #define FGAC_PRM_FEXE (FGAC_PRM_FEX)                                                               /** File exec permission **/
 #define FGAC_PRM_SUGI (FGAC_PRM_FSU | FGAC_PRM_FSG)                                                /** Setuid and Setgid */
 #define FGAC_PRM_FILE (FGAC_PRM_FREA | FGAC_PRM_FWRI | FGAC_PRM_FEXE | FGAC_PRM_SUGI)              /** File permission **/
