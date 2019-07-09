@@ -93,25 +93,35 @@ int fgacfs_getattr (const char *rpath, struct stat *statbuf)
     stat = fgac_stat(state, path, prc);
 
     if (!stat) return -errno;
+    *statbuf = *stat;
 
-    if (prc->uid == 0)
+    if (prc->uid == 0 && !path->is_dir)
     {
+#ifndef NDEBUG    
+        printf ("1\n");        
+#endif        
         fgac_prms prms = fgac_get_allprms (state, path);
+        
         if (!fgac_prms_is_error(&prms))
         {
             size_t i;
             for (i = 0; i < fgac_prms_size(&prms); ++i)
             {
+#ifndef NDEBUG    
+        printf ("2 %llX %llX\n",fgac_prms_get(&prms, i)->allow, FGAC_PRM_FEX);        
+#endif        
                  if (fgac_prms_get(&prms, i)->allow & FGAC_PRM_FEX) 
                  {
-                     stat->st_mode |= S_IXOTH;
+#ifndef NDEBUG    
+        printf ("3\n");        
+#endif        
+                     statbuf->st_mode |= S_IXOTH;
+                     break;
                  }
             }
             fgac_prms_free(&prms);
         }
     }
-
-    *statbuf = *stat;
 
     return 0;
 }
