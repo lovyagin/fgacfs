@@ -93,6 +93,24 @@ int fgacfs_getattr (const char *rpath, struct stat *statbuf)
     stat = fgac_stat(state, path, prc);
 
     if (!stat) return -errno;
+
+    if (prc->uid == 0)
+    {
+        fgac_prms prms = fgac_get_allprms (state, path);
+        if (!fgac_prms_is_error(&prms))
+        {
+            size_t i;
+            for (i = 0; i < fgac_prms_size(&prms); ++i)
+            {
+                 if (fgac_prms_get(&prms, i)->allow & FGAC_PRM_FEX) 
+                 {
+                     stat->st_mode |= S_IXOTH;
+                 }
+            }
+            fgac_prms_free(&prms);
+        }
+    }
+
     *statbuf = *stat;
 
     return 0;
