@@ -94,6 +94,8 @@ int main(int argc, char *argv[] )
     if      (!strcmp (argv[0], "type"))            rc = fgacfsctl_type(state, &prc, argc - 1, argv + 1);
     else if (!strcmp (argv[0], "test"))            rc = fgacfsctl_test(state, &prc, argc - 1, argv + 1);
     else if (!strcmp (argv[0], "show"))            rc = fgacfsctl_show(state, &prc, argc - 1, argv + 1);
+    else if (!strcmp (argv[0], "idump"))           rc = fgacfsctl_idump(state, &prc, argc - 1, argv + 1);
+    else if (!strcmp (argv[0], "pdump"))           rc = fgacfsctl_pdump(state, &prc, argc - 1, argv + 1);
     else if (!strcmp (argv[0], "get"))
     {
         argc -= 1;

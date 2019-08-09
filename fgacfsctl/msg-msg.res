@@ -14,6 +14,8 @@
     "cmd\tcontrol command, usage\n"
     "\ttype\t\t\tshow filesystem type (db, xattr or fxattr)\n"
     "\tshow entry\t\tshow dir/file detailed owner and permissions info\n"
+    "\tpdump entry\t\tdump dir/file inheritance and own permission flags (in fgacfsctl CLI format)\n"
+    "\tidump entry\t\tdump dir/file inherited permission flags (in fgacfsctl CLI format)\n"
     "\t\t\t\tentry\tlocal FGACFS entry path, starting with \'/\'\n"
     "\tget obj entry\t\tget specific entry parameter\n"
     "\t\t\t\tthe answer is always printed as single (parsable) string\n"

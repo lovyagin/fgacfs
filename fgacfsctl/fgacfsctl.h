@@ -30,6 +30,8 @@
 
 int fgacfsctl_type (fgac_state *state, fgac_prc *prc, int argc, char *argv[]);
 int fgacfsctl_show (fgac_state *state, fgac_prc *prc, int argc, char *argv[]);
+int fgacfsctl_idump (fgac_state *state, fgac_prc *prc, int argc, char *argv[]);
+int fgacfsctl_pdump (fgac_state *state, fgac_prc *prc, int argc, char *argv[]);
 int fgacfsctl_test (fgac_state *state, fgac_prc *prc, int argc, char *argv[]);
 
 int fgacfsctl_get_uid (fgac_state *state, fgac_prc *prc, int argc, char *argv[]);

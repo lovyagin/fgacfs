@@ -617,6 +617,29 @@ void fgacfsctl_show_inhs (uint64_t inh, int isdir)
     printf ("\n");
 }
 
+#define DUMP_INH(INH) printf("fgacfsctl '%s' set inh " #INH " %i '%s'\n", hostdir, (inh & FGAC_INH_##INH) == FGAC_INH_##INH, entry);
+
+void fgacfsctl_dump_inhs (uint64_t inh, int isdir, const char *hostdir, const char *entry)
+{
+    DUMP_INH(FPI)
+    DUMP_INH(FPK)
+
+    if (isdir)
+    {
+        DUMP_INH(DPI)
+	DUMP_INH(DPK)
+        DUMP_INH(FPC)
+        DUMP_INH(DPC)
+        DUMP_INH(SFI)
+        DUMP_INH(SFK)
+        DUMP_INH(SDI)
+        DUMP_INH(SDK)
+        DUMP_INH(SFC)
+        DUMP_INH(SDC)
+    }
+}
+
+
 #define SHOW_PRM(SRC,PRM) printf(SRC & FGAC_PRM_##PRM ? #PRM " " : "    ");
 #define SHOW_FIL_PRMS(SRC) \
         printf ("R: ");    \
@@ -709,6 +732,7 @@ void fgacfsctl_show_prm (const fgac_prm *prm, int isdir)
 
 }
 
+
 int fgacfsctl_show_prms (fgac_prms prms, fgac_prc *prc, int isdir)
 {
     fgac_prms uid = fgac_prms_init(), gid = fgac_prms_init(), pex = fgac_prms_init();
@@ -782,6 +806,170 @@ int fgacfsctl_show_prms (fgac_prms prms, fgac_prc *prc, int isdir)
     return FGAC_OK;
 }
 
+#define DUMP_PRM(prm,PRM)                                                \
+    printf ("fgacfsctl '%s' set prm ", hostdir);                         \
+    switch (prm->cat)                                                    \
+    {                                                                    \
+        case FGAC_CAT_ALL: printf ("ALL ");                    break;    \
+        case FGAC_CAT_OUS: printf ("OUS ");   break;    \
+        case FGAC_CAT_OGR: printf ("OGR ");   break;    \
+        case FGAC_CAT_OTH: printf ("OTH ");                    break;    \
+        case FGAC_CAT_UID: printf ("UID %i ", prm->prc.uid);   break;    \
+        case FGAC_CAT_GID: printf ("GID %i ", prm->prc.gid);   break;    \
+        case FGAC_CAT_PEX: printf ("PEX '%s' ", prm->prc.cmd); break;    \
+    }                                                                    \
+    printf (#PRM " A %i '%s'\n", (FGAC_PRM_##PRM & prm->allow) == FGAC_PRM_##PRM, entry);   \
+                                                                         \
+    printf ("fgacfsctl '%s' set prm ", hostdir);                         \
+    switch (prm->cat)                                                    \
+    {                                                                    \
+        case FGAC_CAT_ALL: printf ("ALL ");                    break;    \
+        case FGAC_CAT_OUS: printf ("OUS ");   break;    \
+        case FGAC_CAT_OGR: printf ("OGR ");   break;    \
+        case FGAC_CAT_OTH: printf ("OTH ");                    break;    \
+        case FGAC_CAT_UID: printf ("UID %i ", prm->prc.uid);   break;    \
+        case FGAC_CAT_GID: printf ("GID %i ", prm->prc.gid);   break;    \
+        case FGAC_CAT_PEX: printf ("PEX '%s' ", prm->prc.cmd); break;    \
+    }                                                                    \
+                                                                         \
+    printf (#PRM " D %i '%s'\n", (FGAC_PRM_##PRM & prm->allow) == FGAC_PRM_##PRM, entry);   \
+
+void fgacfsctl_dump_prm (const fgac_prm *prm, int isdir, const char *hostdir, const char *entry)
+{
+    if (!prm->allow && !prm->deny) return;
+    
+    if (isdir)
+    {
+        DUMP_PRM(prm,DRD)
+        DUMP_PRM(prm,DRA)
+        DUMP_PRM(prm,DRP)
+        DUMP_PRM(prm,DXA)
+        DUMP_PRM(prm,DAF)
+        DUMP_PRM(prm,DAD)
+        DUMP_PRM(prm,DAL)
+        DUMP_PRM(prm,DAC)
+        DUMP_PRM(prm,DAB)
+        DUMP_PRM(prm,DAS)
+        DUMP_PRM(prm,DAP)
+        DUMP_PRM(prm,DOF)
+        DUMP_PRM(prm,DOD)
+        DUMP_PRM(prm,DOL)
+        DUMP_PRM(prm,DOC)
+        DUMP_PRM(prm,DOB)
+        DUMP_PRM(prm,DOS)
+        DUMP_PRM(prm,DOP)
+        DUMP_PRM(prm,DCA)
+        DUMP_PRM(prm,DCP)
+        DUMP_PRM(prm,DCI)
+        DUMP_PRM(prm,DCT)
+        DUMP_PRM(prm,DCO)
+        DUMP_PRM(prm,DCG)
+        DUMP_PRM(prm,DSP)
+        DUMP_PRM(prm,DRM)
+        DUMP_PRM(prm,DMV)
+        DUMP_PRM(prm,DMX)
+        DUMP_PRM(prm,DEX)
+    }
+    else
+    {
+        DUMP_PRM(prm,FRD)
+        DUMP_PRM(prm,FRA)
+        DUMP_PRM(prm,FRP)
+        DUMP_PRM(prm,FXA)
+        DUMP_PRM(prm,FSL)
+        DUMP_PRM(prm,FRW)
+        DUMP_PRM(prm,FAP)
+        DUMP_PRM(prm,FTR)
+        DUMP_PRM(prm,FCA)
+        DUMP_PRM(prm,FCP)
+        DUMP_PRM(prm,FCI)
+        DUMP_PRM(prm,FCO)
+        DUMP_PRM(prm,FCG)
+        DUMP_PRM(prm,FSP)
+        DUMP_PRM(prm,FRM)
+        DUMP_PRM(prm,FMV)
+        DUMP_PRM(prm,FMX)
+        DUMP_PRM(prm,FSX)
+        DUMP_PRM(prm,FEX)
+        DUMP_PRM(prm,FSU)
+        DUMP_PRM(prm,FSG) 
+    }
+}
+
+
+int fgacfsctl_dump_prms (fgac_prms prms, fgac_prc *prc, int isdir, const char *hostdir, const char *entry)
+{
+    fgac_prms uid = fgac_prms_init(), gid = fgac_prms_init(), pex = fgac_prms_init();
+    fgac_prm all, ous, ogr, oth; const fgac_prm *prm;
+    all.allow = all.deny = ous.allow = ous.deny = ogr.allow = ogr.deny = oth.allow = oth.deny = 0;
+    all.cat = FGAC_CAT_ALL;
+    ous.cat = FGAC_CAT_OUS;
+    ogr.cat = FGAC_CAT_OGR;
+    oth.cat = FGAC_CAT_OTH;
+
+    ous.prc.uid = prc->uid;
+    ogr.prc.gid = prc->gid;
+
+    size_t i, j, s, l;
+
+    for (i = 0, s = fgac_prms_size(&prms); i < s; ++i)
+    {
+        prm = fgac_prms_get(&prms, i);
+        switch (prm->cat)
+        {
+            case FGAC_CAT_ALL: all.allow |= prm->allow; all.deny |= prm->deny; break;
+            case FGAC_CAT_OUS: ous.allow |= prm->allow; ous.deny |= prm->deny; break;
+            case FGAC_CAT_OGR: ogr.allow |= prm->allow; ogr.deny |= prm->deny; break;
+            case FGAC_CAT_OTH: oth.allow |= prm->allow; oth.deny |= prm->deny; break;
+            case FGAC_CAT_UID:
+                fgac_prms_add(&uid, prm);
+                if (fgac_prms_is_error(&uid)) return FGAC_ERR_MALLOC;
+                l = fgac_prms_size(&uid);
+                if (l > 2)
+                {
+                    for (j = l - 1; j > 0 && fgac_prms_get(&uid, j - 1)->prc.uid > prm->prc.uid; --j)
+                        *fgac_prms_element(&uid, j) = *fgac_prms_get(&uid, j - 1);
+                    *fgac_prms_element(&uid, j) = *prm;
+                }
+                break;
+            case FGAC_CAT_GID:
+                fgac_prms_add(&gid, prm);
+                if (fgac_prms_is_error(&gid)) return FGAC_ERR_MALLOC;
+                l = fgac_prms_size(&gid);
+                if (l > 2)
+                {
+                    for (j = l - 1; j > 0 && fgac_prms_get(&gid, j - 1)->prc.gid > prm->prc.gid; --j)
+                        *fgac_prms_element(&gid, j) = *fgac_prms_get(&gid, j - 1);
+                    *fgac_prms_element(&gid, j) = *prm;
+                }
+                break;
+            case FGAC_CAT_PEX:
+                fgac_prms_add(&pex, prm);
+                if (fgac_prms_is_error(&pex)) return FGAC_ERR_MALLOC;
+                l = fgac_prms_size(&pex);
+                if (l > 2)
+                {
+                    for (j = l - 1; j > 0 && strcmp (fgac_prms_get(&pex, j - 1)->prc.cmd, prm->prc.cmd) > 0; --j)
+                        *fgac_prms_element(&pex, j) = *fgac_prms_get(&pex, j - 1);
+                    *fgac_prms_element(&pex, j) = *prm;
+                }
+                break;
+        }
+    }
+
+    fgacfsctl_dump_prm (&all, isdir, hostdir, entry);
+    fgacfsctl_dump_prm (&ous, isdir, hostdir, entry);
+    for (i = 0, s = fgac_prms_size(&uid); i < s; ++i) fgacfsctl_dump_prm (fgac_prms_get(&uid, i), isdir, hostdir, entry);
+
+    fgacfsctl_dump_prm (&ogr, isdir, hostdir, entry);
+    for (i = 0, s = fgac_prms_size(&gid); i < s; ++i) fgacfsctl_dump_prm (fgac_prms_get(&gid, i), isdir, hostdir, entry);
+
+    for (i = 0, s = fgac_prms_size(&pex); i < s; ++i) fgacfsctl_dump_prm (fgac_prms_get(&pex, i), isdir, hostdir, entry);
+    fgacfsctl_dump_prm (&oth, isdir, hostdir, entry);
+
+    return FGAC_OK;
+}
+
 // entry
 int fgacfsctl_show (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
 {
@@ -823,6 +1011,62 @@ int fgacfsctl_show (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
 
     printf ("\nInherited permissions:\n");
     if ((rc = fgacfsctl_show_prms (iprms, prc, isdir))) return rc;
+
+    return FGAC_OK;
+
+}
+
+
+// entry
+int fgacfsctl_pdump (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
+{
+    fgac_path path;
+    int rc, isdir;
+    char buffer [FGAC_LIMIT_PATH];
+    fgac_prms jprms;
+    uint64_t inh;
+
+    if (argc != 1) return FGACFSCTL_MSG_USAGE;
+    if ((rc = fgacfsctl_mk_path(argv[0], buffer, &path))) return rc;
+
+    if (!fgac_check_prm2 (state, &path, prc, FGAC_PRM_FRP, FGAC_PRM_DRP)) return FGACFSCTL_ERR_PRM;
+
+    jprms = fgac_get_prms   (state, &path);
+
+    if (fgac_prms_is_error(&jprms)) return FGACFSCTL_ERR_PRMGET;
+
+    if ((rc = fgac_get_inh   (state, &path, &inh))) return rc;
+
+    isdir = fgac_is_dir(state, &path);
+
+    fgacfsctl_dump_inhs (inh, isdir, state->hostdir, argv[0]);
+
+    if ((rc = fgacfsctl_dump_prms (jprms, prc, isdir, state->hostdir, argv[0]))) return rc;
+
+    return FGAC_OK;
+
+}
+
+// entry
+int fgacfsctl_idump (fgac_state *state, fgac_prc *prc, int argc, char *argv[])
+{
+    fgac_path path;
+    int rc, isdir;
+    char buffer [FGAC_LIMIT_PATH];
+    fgac_prms jprms;
+
+    if (argc != 1) return FGACFSCTL_MSG_USAGE;
+    if ((rc = fgacfsctl_mk_path(argv[0], buffer, &path))) return rc;
+
+    if (!fgac_check_prm2 (state, &path, prc, FGAC_PRM_FRP, FGAC_PRM_DRP)) return FGACFSCTL_ERR_PRM;
+
+    jprms = fgac_get_inhprms(state, &path);
+
+    isdir = fgac_is_dir(state, &path);
+
+    if (fgac_prms_is_error(&jprms)) return FGACFSCTL_ERR_PRMGET;
+
+    if ((rc = fgacfsctl_dump_prms (jprms, prc, isdir, state->hostdir, argv[0]))) return rc;
 
     return FGAC_OK;
 
