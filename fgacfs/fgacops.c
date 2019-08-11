@@ -54,7 +54,7 @@
                 (unsigned) fgacprc.gid,                                                  \
                 fgacprc.cmd,                                                             \
                 exe,                                                                     \
-                rs                                                                       \
+                (int) rs                                                                 \
           );                                                                       
 #else
 #define FGAC_DEBUG_REQUEST
@@ -108,7 +108,7 @@ int fgacfs_getattr (const char *rpath, struct stat *statbuf)
             for (i = 0; i < fgac_prms_size(&prms); ++i)
             {
 #ifndef NDEBUG    
-        printf ("2 %llX %llX\n",fgac_prms_get(&prms, i)->allow, FGAC_PRM_FEX);        
+        printf ("2 %lX %llX\n",fgac_prms_get(&prms, i)->allow, FGAC_PRM_FEX);        
 #endif        
                  if (fgac_prms_get(&prms, i)->allow & FGAC_PRM_FEX) 
                  {
@@ -361,7 +361,7 @@ int fgacfs_add(const char  *rpath,
         
 
 #ifndef NDEBUG
-        printf("pprm %llX DOF %llX DAF %llX DOF %llX\n", pprm, pprm & FGAC_PRM_DOF, pprm & FGAC_PRM_DAF, FGAC_PRM_DOF);
+        printf("pprm %lX DOF %llX DAF %llX DOF %llX\n", pprm, pprm & FGAC_PRM_DOF, pprm & FGAC_PRM_DAF, FGAC_PRM_DOF);
 #endif        
 
         
@@ -900,69 +900,253 @@ int fgacfs_fsync (const char *rpath, int datasync, struct fuse_file_info *fi)
 
 }
 
+int int_to_hex (uint64_t i, char* hex);
+int hex_to_int (const char* hex, uint64_t *i);
+
+
 int fgacfs_setxattr (const char *rpath, const char *name, const char *value, size_t size, int flags)
 {
+    size_t len = strlen(name);
     FGACFS_INIT
     FGACFS_EXISTS
 
-    if (!memcmp(name, "user.fgacfs.", 12)) return -EACCES;
+//    if (len >= 12 && !memcmp(name, "user.fgacfs.", 12)) return -EACCES;
+
+    if (len >= 19 && !memcmp(name, "user.fgacfs.prm.", 16))
+    {
+        const char *id;
+        FGACFS_PRM2(CP)
+        if (size != 16) return -EACCES;
+        fgac_prm prm;
+        prm.allow = *(uint64_t *) value;
+        prm.deny  = *(uint64_t *) (value + 8);
+        name += 16;
+        len -= 16;
+        if (!memcmp(name, "all", 3))
+            prm.cat = FGAC_CAT_ALL;
+        else if (!memcmp(name, "ous", 3))
+            prm.cat = FGAC_CAT_OUS;
+        else if (!memcmp(name, "ogr", 3))
+            prm.cat = FGAC_CAT_OGR;
+        else if (!memcmp(name, "oth", 3))
+            prm.cat = FGAC_CAT_OTH;
+        else if (len >= 12 && !memcmp(name, "uid.", 4))
+        {
+            uint64_t uid;
+            id = name + 4;
+            if (!hex_to_int(id, &uid)) return -EACCES;
+            prm.cat = FGAC_CAT_UID;
+            prm.prc.uid = uid;
+        }
+        else if (len >= 12 && !memcmp(name, "gid.", 4))
+        {
+            uint64_t gid;
+            id = name + 4;
+            if (!hex_to_int(id, &gid)) return -EACCES;
+            prm.prc.gid = gid;
+            prm.cat = FGAC_CAT_GID;
+        }
+        else if (len >= 5 && !memcmp(name, "pex.", 4))
+        {
+            prm.cat = FGAC_CAT_PEX;
+            prm.prc.cmd = (char *) name + 4;
+        }
+        else return -EACCES;
+
+        if (fgac_set_prm (state, path, &prm)) return -EACCES;  
+        return 0;
+    }
+    
+    if (len == 15 && !memcmp(name, "user.fgacfs.inh", 15))
+    {
+        uint64_t inh;
+        FGACFS_PRM2(CI)
+        if (size != 8) return -EACCES;
+        inh = *(uint64_t *) value;
+        if (inh & FGAC_INH_TRMS) FGACFS_PRM(DCT);
+        
+        if (fgac_set_inh (state, path, inh)) return -EACCES;
+#ifndef NDEBUG
+        printf ("1: %s %s\n", name, value);
+#endif        
+        return 0;
+    }
 
     FGACFS_PRM2(MX);
     FGACFS_HOSTPATH
 
-    FGACFS_RETCALL(lsetxattr(hostpath, name, value, size, flags))
+    rc = lsetxattr(hostpath, name, value, size, flags);
+    
+    if (rc < 0) return -errno; else return 0;
 }
 
 int fgacfs_getxattr (const char *rpath, const char *name, char *value, size_t size)
 {
+    size_t len = strlen(name);
     FGACFS_INIT
     FGACFS_EXISTS
 
-    if (!memcmp(name, "user.fgacfs.", 12)) return -EACCES;
+//    if (!memcmp(name, "user.fgacfs.", 12)) return -EACCES;
+
+    if (len >= 19 && !memcmp(name, "user.fgacfs.prm.", 16))
+    {
+        const char *id;
+        FGACFS_PRM2(RP)
+        if (!size) return 16;
+        if (size < 16) return -ERANGE;
+        fgac_prm prm;
+        name += 16;
+        len -= 16;
+        if (!memcmp(name, "all", 3))
+            prm.cat = FGAC_CAT_ALL;
+        else if (!memcmp(name, "ous", 3))
+            prm.cat = FGAC_CAT_OUS;
+        else if (!memcmp(name, "ogr", 3))
+            prm.cat = FGAC_CAT_OGR;
+        else if (!memcmp(name, "oth", 3))
+            prm.cat = FGAC_CAT_OTH;
+        else if (len >= 12 && !memcmp(name, "uid.", 4))
+        {
+            uint64_t uid;
+            id = name + 4;
+            if (!hex_to_int(id, &uid)) return -EACCES;
+            prm.cat = FGAC_CAT_UID;
+            prm.prc.uid = uid;
+        }
+        else if (len >= 12 && !memcmp(name, "gid.", 4))
+        {
+            uint64_t gid;
+            id = name + 4;
+            if (!hex_to_int(id, &gid)) return -EACCES;
+            prm.prc.gid = gid;
+            prm.cat = FGAC_CAT_GID;
+        }
+        else if (len >= 5 && !memcmp(name, "pex.", 4))
+        {
+            prm.cat = FGAC_CAT_PEX;
+            prm.prc.cmd = (char *) name + 4;
+        }
+        else return -EACCES;
+
+        if (fgac_get_prm (state, path, &prm)) return EACCES;
+        
+        memcpy (value,   &prm.allow, 8);
+        memcpy (value+8, &prm.deny,  8);  
+                
+        return 16;
+    }
+    
+    if (len == 15 && !memcmp(name, "user.fgacfs.inh", 15))
+    {
+        uint64_t inh;
+        FGACFS_PRM2(RP)
+        if (!size) return 8;
+        if (size < 8) return -ERANGE;
+        
+        if (fgac_get_inh (state, path, &inh)) return EACCES;
+        
+        memcpy (value, &inh, 8);
+        
+        return 8;
+            
+    }
 
     FGACFS_PRM2(XA);
     FGACFS_HOSTPATH
 
-    FGACFS_RETCALL(lgetxattr(hostpath, name, value, size))
+    rc = lgetxattr(hostpath, name, value, size);
+    if (rc < 0) return -errno; else return rc;
 }
+
+#define ADD_XATTR(asize,value)                   \
+         r += asize;                             \
+         if (size)                               \
+         {                                       \
+             if (r > size) return -ERANGE;       \
+             else memcpy (list, value, asize);   \
+         }                                       \
+         list += asize;
 
 int fgacfs_listxattr (const char *rpath, char *list, size_t size)
 {
-    ssize_t s = size, r = 0;
+    ssize_t s = 0, r = 0;
     char *list2, *i, *e;
     size_t length;
-
+    
     FGACFS_INIT
     FGACFS_EXISTS
 
-    FGACFS_PRM2(XA);
     FGACFS_HOSTPATH
 
-    if (size == 0)
-        if ((s = llistxattr(hostpath, list, 0)) < 0) return -errno;
 
+    if (fgac_check_prm2(state, path, prc, FGAC_PRM_FRP, FGAC_PRM_DRP)) 
+    {
+         fgac_prms prms = fgac_get_prms (state, path);
+         size_t n = fgac_prms_size(&prms), i;
+         if (fgac_prms_is_error(&prms)) return -ENOMEM;
+         
+         ADD_XATTR(16, "user.fgacfs.inh")
+                  
+         for (i = 0; i < n; ++i)
+         {
+             fgac_prm prm = *fgac_prms_get(&prms, i);
+             switch (prm.cat)
+             {
+                 case FGAC_CAT_ALL: 
+                     ADD_XATTR(20, "user.fgacfs.prm.all") break;
+                 case FGAC_CAT_OUS: 
+                     ADD_XATTR(20, "user.fgacfs.prm.ous") break;
+                 case FGAC_CAT_OGR: 
+                     ADD_XATTR(20, "user.fgacfs.prm.ogr") break;
+                 case FGAC_CAT_OTH: 
+                     ADD_XATTR(20, "user.fgacfs.prm.oth") break;
+                 case FGAC_CAT_UID:
+                 {
+                     char name[37];
+                     char id[17];
+                     int_to_hex(prm.prc.uid, id);
+                     fgac_str_cat2 (name, "user.fgacfs.prm.uid.", id, 37);
+                     ADD_XATTR(37, name);
+                     break;
+                 }
+                 case FGAC_CAT_GID:
+                 {
+                     char name[37];
+                     char id[17];
+                     int_to_hex(prm.prc.gid, id);
+                     fgac_str_cat2 (name, "user.fgacfs.prm.gid.", id, 37);
+                     ADD_XATTR(37, name);
+                     break;
+                 }
+                 case FGAC_CAT_PEX:                 
+                 {
+                      size_t size = 20 + strlen(prm.prc.cmd);
+                      char *name = malloc(size);
+                      if (!name) return -ENOMEM;
+                      fgac_str_cat2 (name, "user.fgacfs.prm.pex.", prm.prc.cmd, size);
+                      ADD_XATTR(size, name);
+                 }          
+             }
+        }     
+    }
+
+    if (!fgac_check_prm2(state, path, prc, FGAC_PRM_FXA, FGAC_PRM_DXA)) return r;
+
+    if ((s = llistxattr(hostpath, list, 0)) < 0) return -errno;
     list2 = malloc(s);
-    if (!list2) return -ENOMEM;
-
-    s = llistxattr(hostpath, list2, s);
+    s = llistxattr(hostpath, list2, s);    
     if (s < 0) {free(list2); return -errno; }
 
     for (i = list2, e = list2 + s; i < e; i += length)
     {
         length = strlen (i) + 1;
-        if (length < 10 || memcmp(i, "user.fgacfs.", 12))
+        if (length < 12 || memcmp(i, "user.fgacfs.", 12))
         {
-            r += length;
-            if (size)
-            {
-                if (r >= (ssize_t) size) {free (list2); return -ERANGE; }
-                memcpy(i, list, length);
-                list += length;
-            }
+            ADD_XATTR(length, i);
         }
     }
-
-    free(list2); return r;
+    free(list2); 
+    return r;
 }
 
 int fgacfs_removexattr (const char *rpath, const char *name)
@@ -970,7 +1154,7 @@ int fgacfs_removexattr (const char *rpath, const char *name)
     FGACFS_INIT
     FGACFS_EXISTS
 
-    if (!memcmp(name, "user.fgacfs.", 12)) return -EACCES;
+    if (strlen(name) >= 12 && !memcmp(name, "user.fgacfs.", 12)) return -EACCES;
 
     FGACFS_PRM2(MX);
     FGACFS_HOSTPATH

@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 void rb_clear (rb_node *node)
 {
