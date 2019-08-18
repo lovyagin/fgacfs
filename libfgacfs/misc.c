@@ -190,6 +190,23 @@ int fgac_str_cat2 (char *dest, const char *s1, const char *s2, size_t size)
 
 }
 
+int fgac_str_cat3 (char *dest, const char *s1, const char *s2, const char *s3, size_t size)
+{
+    size_t l1 = s1 ? strlen(s1) : 0, l2 = s2 ? strlen(s2) : 0, l3 = s3 ? strlen(s3) : 0;
+    if (!dest) return 0;
+    if (l1 + l2 + l3 >= size)
+    {
+        if (size) *dest = '\0';
+        return 0;
+    }
+    if (l1) memcpy (dest, s1, l1);
+    if (l2) memcpy (dest + l1, s2, l2 + 1); else dest[l1] = '\0';
+    if (l3) memcpy (dest + l1 + l2, s3, l3 + 1); else dest[l1 + l2] = '\0';
+    return 1;
+
+}
+
+
 int fgac_str_add (char *dest, size_t shift, const char *source, size_t size)
 {
     size_t len = source ? strlen(source) : 0;

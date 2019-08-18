@@ -176,6 +176,7 @@ printf("2\n");\
         fgac_delete (state, path);               \
         return -EACCES;                          \
     }                                            \
+                                                                                              
 
 #define ADD_FILE ADD(mkfile, unlink)
 #define ADD_DIR  ADD(mkdir,  rmdir )
@@ -190,7 +191,7 @@ printf("2\n");\
 
 #define ADD_ORD_PRM_FILE                                 \
     if (                                                 \
-        (!fgac_check_inh(state, parent, FGAC_INH_FPI) && \
+        (!fgac_check_inh(state, parent, FGAC_INH_SFI) && \
          !fgac_check_inh(state, parent, FGAC_INH_FPC)    \
         ) ||                                             \
         fgac_check_prm(state, path, prc, FGAC_PRM_FCP)   \
@@ -227,10 +228,10 @@ printf("2\n");\
 
 #define ADD_ORD_PRM_DIRS                                 \
     if (                                                 \
-        (!fgac_check_inh(state, parent, FGAC_INH_DPI) && \
+        (!fgac_check_inh(state, parent, FGAC_INH_SDI) && \
          !fgac_check_inh(state, parent, FGAC_INH_DPC)    \
         ) ||                                             \
-        fgac_check_prm(state, path, prc, FGAC_PRM_DCP)   \
+         fgac_check_prm(state, path, prc, FGAC_PRM_DCP)  \
        )                                                 \
     {                                                    \
         fgac_prm fgacprm, *prm = &fgacprm;               \
@@ -257,7 +258,7 @@ printf("2\n");\
 
 #define ADD_ORD_PRM_SL                                   \
     if (                                                 \
-        (!fgac_check_inh(state, parent, FGAC_INH_FPI) && \
+        (!fgac_check_inh(state, parent, FGAC_INH_SFI) && \
          !fgac_check_inh(state, parent, FGAC_INH_FPC)    \
         ) ||                                             \
         fgac_check_prm(state, path, prc, FGAC_PRM_FCP)   \
@@ -288,7 +289,7 @@ printf("2\n");\
         prm->deny = 0;                                   \
         prm->allow = FGAC_PRM_FILE;                      \
     }
-
+/*
 #define CHOWNMOD                                                           \
     if (source)                                                            \
     {                                                                      \
@@ -335,10 +336,11 @@ printf("2\n");\
             }                                                              \
         }                                                                  \
     }
+*/
 
 int fgacfs_add(const char  *rpath,
                struct stat *stat,
-               fgac_path   *source,
+               int         source,
                const char  *target
               )
 {
@@ -376,7 +378,7 @@ int fgacfs_add(const char  *rpath,
 
         ADD_FILE
         ADD_ORD_PRM_FILE
-        CHOWNMOD
+//        CHOWNMOD
     }
     else if (S_ISCHR(stat->st_mode))
     {
@@ -384,7 +386,7 @@ int fgacfs_add(const char  *rpath,
         if (!source) FGACFS_FAILCALL(mknod(hostpath, hostmode, stat->st_dev))
         ADD_FILE
         ADD_ORD_PRM_FILE
-        CHOWNMOD
+//        CHOWNMOD
     }
     else if (S_ISBLK(stat->st_mode))
     {
@@ -392,7 +394,7 @@ int fgacfs_add(const char  *rpath,
         if (!source) FGACFS_FAILCALL(mknod(hostpath, hostmode, stat->st_dev))
         ADD_FILE
         ADD_ORD_PRM_FILE
-        CHOWNMOD
+//        CHOWNMOD
     }
     else if (S_ISFIFO(stat->st_mode))
     {
@@ -400,7 +402,7 @@ int fgacfs_add(const char  *rpath,
         if (!source) FGACFS_FAILCALL(mkfifo(hostpath, hostmode))
         ADD_FILE
         ADD_ORD_PRM_FILE
-        CHOWNMOD
+//        CHOWNMOD
     }
     else if (S_ISSOCK(stat->st_mode))
     {
@@ -408,7 +410,7 @@ int fgacfs_add(const char  *rpath,
         if (!source) FGACFS_FAILCALL(mknod(hostpath, hostmode, stat->st_dev))
         ADD_FILE
         ADD_ORD_PRM_FILE
-        CHOWNMOD
+//        CHOWNMOD
     }
     else if (S_ISDIR(stat->st_mode))
     {
@@ -416,7 +418,7 @@ int fgacfs_add(const char  *rpath,
         if (!source) FGACFS_FAILCALL(mkdir(hostpath, hostmode));
         ADD_DIR
         ADD_ORD_PRM_DIRS
-        CHOWNMOD
+//        CHOWNMOD
     }
     else if (S_ISLNK(stat->st_mode))
     {
@@ -424,7 +426,7 @@ int fgacfs_add(const char  *rpath,
         if (!source) FGACFS_FAILCALL(symlink(target, hostpath))
         ADD_FILE
         ADD_ORD_PRM_SL
-        CHOWNMOD
+//        CHOWNMOD
     }
     else return -EACCES;
 
@@ -438,7 +440,7 @@ int fgacfs_mknod (const char *rpath, mode_t mode, dev_t dev)
     stat.st_mode = mode;
     stat.st_dev  = dev;
 
-    return fgacfs_add(rpath, &stat, NULL, NULL);
+    return fgacfs_add(rpath, &stat, 0, NULL);
 }
 
 int fgacfs_mkdir (const char *rpath, mode_t mode)
@@ -447,7 +449,7 @@ int fgacfs_mkdir (const char *rpath, mode_t mode)
 
     stat.st_mode = mode | S_IFDIR;
 
-    return fgacfs_add(rpath, &stat, NULL, NULL);
+    return fgacfs_add(rpath, &stat, 0, NULL);
 }
 
 int fgacfs_unlink (const char *rpath)
@@ -481,12 +483,274 @@ int fgacfs_symlink (const char *target, const char *rpath)
     struct stat stat;
 
     stat.st_mode = S_IFLNK;
-    return fgacfs_add(rpath, &stat, NULL, target);
+    return fgacfs_add(rpath, &stat, 0, target);
+}
+
+struct stat * fgac_prestat (fgac_state *state, fgac_path *path);
+
+int check_rename (fgac_state *state, fgac_path *path, fgac_prc *prc)
+{
+#ifndef NDEBUG        
+    printf ("'%s'\n", path->path);
+#endif        
+    if (fgac_is_dir(state, path))
+    {
+        
+        DIR *d;
+        struct dirent *de;
+        
+        if (!fgac_check_prm (state, path, prc, FGAC_PRM_DRD) ||
+            !fgac_check_prm (state, path, prc, FGAC_PRM_DRA) ||
+            !fgac_check_prm (state, path, prc, FGAC_PRM_DEX) ||
+            !fgac_check_prm (state, path, prc, FGAC_PRM_DXA) || 
+            !fgac_check_prm (state, path, prc, FGAC_PRM_DRM) 
+           ) return 0;
+           
+        d = opendir(path->hostpath);
+        if (!d) return 0;
+        
+        while ((de = readdir(d)))
+        {
+           if (strcmp (de->d_name, ".") && strcmp (de->d_name, ".."))
+           {
+               char buffer[FGAC_LIMIT_PATH];
+               if (!fgac_str_cat3 (buffer, fgac_get_path(path), "/", de->d_name, FGAC_LIMIT_PATH)) return 0;
+               fgac_path child = fgac_path_init(buffer);
+               if (!check_rename (state, &child, prc)) return 0;
+           }       
+        }
+        return 1;        
+    }
+    else
+    {
+        struct stat *s = fgac_prestat (state, path);
+        return (S_ISLNK (s->st_mode) ? fgac_check_prm (state, path, prc, FGAC_PRM_FSL) : fgac_check_prm (state, path, prc, FGAC_PRM_FRD)) &&
+               fgac_check_prm (state, path, prc, FGAC_PRM_FRA) &&
+               fgac_check_prm (state, path, prc, FGAC_PRM_FXA) &&
+               fgac_check_prm (state, path, prc, FGAC_PRM_FRM);
+               
+    }
+}
+
+typedef struct mv_record
+{
+    char rpath[FGAC_LIMIT_PATH];
+    int rd;
+    int fex;
+    struct stat st;
+    uint64_t inh;
+    uid_t uid;
+    gid_t gid;
+    int ex;
+    fgac_prms prms;
+} mv_record;
+
+typedef struct mv_array
+{
+    mv_record *data;
+    size_t size;
+} mv_array;
+
+int load_mv_tree (fgac_state *state, const char *rpath, fgac_prc *prc, mv_array *array)
+{
+    mv_record *tmp;
+    fgac_path path;
+    
+#ifndef NDEBUG
+    printf ("load mv tree: '%s'\n", rpath);
+#endif        
+    
+    ++array->size;
+    tmp = realloc(array->data, array->size * sizeof (mv_record));
+    if (!tmp) return -ENOMEM;
+#ifndef NDEBUG
+    printf ("realloc %p -> %p\n", array->data, tmp);    
+#endif    
+    array->data = tmp;
+
+
+    
+    tmp = &array->data[array->size - 1];
+    path = fgac_path_init (tmp->rpath);
+    
+    if (!fgac_str_cpy (tmp->rpath, rpath, FGAC_LIMIT_PATH)) return -ENOMEM;
+    tmp->fex = !fgac_is_dir (state, &path) && fgac_check_prm (state, &path, prc, FGAC_PRM_FEX);
+    tmp->rd = fgac_is_dir (state, &path) ? fgac_check_prm (state, &path, prc, FGAC_PRM_DRP) : fgac_check_prm (state, &path, prc, FGAC_PRM_FRP);
+    tmp->st = *fgac_prestat (state, &path);
+    if (fgac_get_inh (state, &path, &tmp->inh)) return -EACCES;
+    if (fgac_get_owner (state, &path, &tmp->uid)) return -EACCES;
+    if (fgac_get_group (state, &path, &tmp->gid)) return -EACCES;
+    tmp->ex = fgac_is_dir (state, &path) ? 0 : fgac_check_prm (state, &path, prc, FGAC_PRM_FEX);
+    if (tmp->rd) tmp->prms = array->size == 1 ? fgac_get_allprms (state, &path) : fgac_get_prms (state, &path);
+    if (fgac_prms_is_error (&tmp->prms)) tmp->rd = 0;
+
+#ifndef NDEBUG
+    printf ("1\n");
+#endif        
+
+    
+    if (fgac_is_dir (state, &path))
+    {
+        DIR *d = opendir (path.hostpath);
+        struct dirent *de;
+        
+        if (!d) return -EACCES;
+        
+#ifndef NDEBUG
+    printf ("2\n");
+#endif        
+        
+//        size_t pos = array->size - 1;
+        while ((de = readdir(d)))
+        {
+           if (strcmp (de->d_name, ".") && strcmp (de->d_name, ".."))
+           {
+               int rc;
+               char child[FGAC_LIMIT_PATH];
+#ifndef NDEBUG
+    printf ("using: '%p'\n", array->data);
+#endif        
+               if (!fgac_str_cat3 (child, rpath, "/", de->d_name, FGAC_LIMIT_PATH)) {closedir (d); return 0;}
+               
+#ifndef NDEBUG
+    printf ("child: '%s'\n", child);
+#endif        
+               
+               
+               rc = load_mv_tree (state, child, prc, array);
+               if (rc) {closedir(d); return rc;}
+           }       
+        }
+        
+        closedir (d);
+    }
+    
+    
+    return 0;   
+}
+
+void free_mv_tree (mv_array *array)
+{
+    size_t i;
+    for (i = 0; i < array->size; ++i)
+        fgac_prms_free (&array->data[i].prms);
+    free (array->data);
+}
+
+int fgacfs_rename_tree (fgac_state *state, fgac_path *path, fgac_prc *prc, mv_array *a, const char *source, const char *target)
+{
+    size_t i, l = strlen (source);
+    
+    for (i = 0; i < a->size; ++i)
+    {
+        int ch = 0, ch_inh = 0, ch_trm = 0, ch_prm = 0, ch_fex = 0;
+        uid_t u1 = 0, u2 = 0;
+        gid_t g1 = 0, g2 = 0; 
+        char buffer[FGAC_LIMIT_PATH];
+        if (!fgac_str_cat2 (buffer, target, a->data[i].rpath + l, FGAC_LIMIT_PATH)) return -ENOMEM;
+        fgac_path dpath = fgac_path_init (buffer);
+        
+        fgac_path spath = fgac_path_init(a->data[i].rpath);    
+            
+        fgac_delete (state, &spath);
+        
+        fgac_set_inh (state, &dpath, 0);
+        size_t j;
+        for (j = 0; j < fgac_prms_size(&a->data[i].prms); ++j)
+        {
+              fgac_prm prm = * fgac_prms_get (&a->data[i].prms, j);
+              prm.allow = prm.deny = 0;
+              fgac_set_prm (state, &dpath, &prm);
+        }
+        
+        fgacfs_add (fgac_get_path(&dpath), &a->data[i].st, 1, NULL);
+        
+
+        do
+        {          
+          if (ch_inh != 2 &&  
+              (fgac_is_dir (state, &dpath) ? fgac_check_prm (state, &dpath, prc, FGAC_PRM_DCI) : fgac_check_prm (state, &dpath, prc, FGAC_PRM_FCI))
+             ) ch_inh = 1;
+          
+          if (ch_trm != 2 &&  
+               fgac_is_dir (state, &dpath) && fgac_check_prm (state, &dpath, prc, FGAC_PRM_DCT)
+             ) ch_trm = 1;
+          
+          if (ch_prm != 2 &&  
+              (fgac_is_dir (state, &dpath) ? fgac_check_prm (state, &dpath, prc, FGAC_PRM_DCP) : fgac_check_prm (state, &dpath, prc, FGAC_PRM_FCP))
+             ) ch_inh = 1;
+          
+          if (!fgac_is_dir (state, &dpath) && fgac_check_prm (state, &dpath, prc, FGAC_PRM_FSX)
+             ) ch_fex = 1;
+
+          
+          u1 = u2 = g1 = g2 = 0;
+          fgac_get_owner (state, &dpath, &u1);
+          fgac_get_group (state, &dpath, &g1);
+          fgacfs_chown (buffer, a->data[i].uid, a->data[i].gid);
+          fgac_get_owner (state, &dpath, &u2);
+          fgac_get_group (state, &dpath, &g2);
+          ch = (u1 != u2) || (g1 != g2);
+          
+          if (ch_inh != 2 &&  
+              (fgac_is_dir (state, &dpath) ? fgac_check_prm (state, &dpath, prc, FGAC_PRM_DCI) : fgac_check_prm (state, &dpath, prc, FGAC_PRM_FCI))
+             ) ch_inh = 1;
+          
+          if (ch_trm != 2 &&  
+               fgac_is_dir (state, &dpath) && fgac_check_prm (state, &dpath, prc, FGAC_PRM_DCT)
+             ) ch_trm = 1;
+          
+          if (ch_prm != 2 &&  
+              (fgac_is_dir (state, &dpath) ? fgac_check_prm (state, &dpath, prc, FGAC_PRM_DCP) : fgac_check_prm (state, &dpath, prc, FGAC_PRM_FCP))
+             ) ch_inh = 1;
+          
+          if (!fgac_is_dir (state, &dpath) && fgac_check_prm (state, &dpath, prc, FGAC_PRM_FSX)
+             ) ch_fex = 1;
+
+          if (ch_inh == 1) { fgac_set_inh (state, &dpath, a->data[i].inh & FGAC_INH_INHS); ch_inh = 2; ch = 1; }
+          if (ch_trm == 1) { fgac_set_inh (state, &dpath, a->data[i].inh & FGAC_INH_TRMS); ch_trm = 2; ch = 1; }
+          
+          if (ch_prm == 1)
+          {
+              size_t j;
+              for (j = 0; j < fgac_prms_size(&a->data[i].prms); ++j)
+              {
+                  const fgac_prm * prm = fgac_prms_get (&a->data[i].prms, j);
+                  fgac_set_prm (state, &dpath, prm);
+              }
+              ch_prm = 2;
+              ch = 1;              
+          }
+        
+        } while (ch);
+        
+        if (ch_fex == 1 && ch_prm != 2)
+        {
+            int fex = fgac_check_prm (state, &dpath, prc, FGAC_PRM_FEX);
+            if (fex != a->data[i].fex)
+            {
+                fgac_prm prm;
+                prm.cat = FGAC_CAT_UID;
+                prm.prc.uid = prc->uid;
+                
+                if (!fgac_get_prm (state, &dpath, &prm))
+                {
+                    prm.allow |= FGAC_PRM_FEX;
+                    fgac_set_prm (state, &dpath, &prm);
+                } 
+            }
+        }
+        
+        
+    }
+    
+    return 0;
+    
 }
 
 int fgacfs_rename (const char *rpath, const char *newrpath)
 {
-    struct stat *stat;
+//    struct stat *stat;
     fgac_path fgacnewpath = fgac_path_init((char *) newrpath), *newpath = &fgacnewpath;
     char newpbuffer[FGAC_LIMIT_PATH], 
          dirn[FGAC_LIMIT_PATH], newdirn[FGAC_LIMIT_PATH];
@@ -519,21 +783,31 @@ int fgacfs_rename (const char *rpath, const char *newrpath)
         return 0;
     }
     
-    FGACFS_PRM2(RM);
-
-    stat = fgac_stat(state, path, prc);
-
-    if ((rc = fgacfs_add(newrpath, stat, path, NULL)) < 0) return rc;
-
-    if (rename(hostpath, newhostpath) < 0)
-    {
-        fgac_delete(state, newpath);
-        return -EACCES;
-    }
+//    FGACFS_PRM2(RM);
+    if (!check_rename (state, path, prc)) return -EACCES;
     
-    fgac_delete(state, path);
-    fgac_rename(state, path, newrpath);
-    return 0;
+#ifndef NDEBUG
+    printf ("rename allowed\n");    
+#endif    
+
+//    stat = fgac_stat(state, path, prc);
+
+    mv_array a;
+    
+    a.size = 0;
+    a.data = NULL;
+    rc = load_mv_tree (state, fgac_get_path(path), prc, &a);
+    if (rc) {free_mv_tree(&a); return rc; }
+
+#ifndef NDEBUG
+    printf ("tree loaded, p=%p\n", a.data);    
+#endif    
+
+    FGACFS_FAILCALL (rename(hostpath, newhostpath))
+    
+    rc = fgacfs_rename_tree (state, path, prc, &a, rpath, newhostpath);
+    free_mv_tree(&a);
+    return rc;
 }
 
 #define CHMOD_CATCH(t,T)     \

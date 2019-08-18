@@ -782,6 +782,17 @@ int fgac_str_cat (char *dest, const char *source, size_t size);
 */
 int fgac_str_cat2 (char *dest, const char *s1, const char *s2, size_t size);
 
+/**
+* @brief      safe concatenate three strings
+* @param[in]  dest     destination string buffer
+* @param[in]  s1       first string
+* @param[in]  s2       second string
+* @param[in]  s2       third string
+* @param[in]  size     buffer size (including zero-char)
+* @return     1 on success, 0 on buffer overflow (safe, dest is zero-length string)
+*/
+int fgac_str_cat3 (char *dest, const char *s1, const char *s2, const char *s3, size_t size);
+
 
 /**
 * @brief      initialize empty fgac_prms array

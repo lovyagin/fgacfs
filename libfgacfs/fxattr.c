@@ -62,6 +62,7 @@ int fxattr_unset (fgac_state *state, fgac_path *path, const char *name)
 
 int fxattr_get_int (fgac_state *state, fgac_path *path, const char *name, uint64_t *attr)
 {
+     *attr = 0;
      int rc = lgetxattr(FGAC_HOSTPATH, name, attr, 8);
 
      if (rc == 8)
@@ -250,7 +251,7 @@ int fxattr_get_prm (fgac_state *state, fgac_path *path, fgac_prm *prm)
                            return FGAC_OK;
         case FGAC_CAT_PEX: /**< Process EXecutable                         **/
                            if (!fgac_str_cat2(name1, "user.fgacfs.Apex.", prm->prc.cmd, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
-                           if (!fgac_str_cat2(name1, "user.fgacfs.Dpex.", prm->prc.cmd, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
+                           if (!fgac_str_cat2(name2, "user.fgacfs.Dpex.", prm->prc.cmd, FGAC_LIMIT_PATH)) return FGAC_ERR_PATH;
                            FGAC_GET(name1, allow)
                            FGAC_GET(name2, deny )
                            return FGAC_OK;

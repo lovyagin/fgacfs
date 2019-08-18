@@ -94,7 +94,7 @@
     "\tDAL\t(W) create (add) symbolic link in the directory, same owner as parent directory's one\n"
     "\tDAC\t(W) create (add) symbolic device, same owner as parent directory's one\n"
     "\tDAB\t(W) create (add) block device, same owner as parent directory's one\n"
-    "\tDAO\t(W) create (add) socket, same owner as parent directory's one\n"
+    "\tDAS\t(W) create (add) socket, same owner as parent directory's one\n"
     "\tDAP\t(W) create (add) fifo, same owner as parent directory's one\n"
     "\tDOF\t(W) create own files (mknod)\n"
     "\tDOD\t(W) create own subdirectory (mkdir)\n"
