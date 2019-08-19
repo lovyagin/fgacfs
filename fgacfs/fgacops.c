@@ -140,7 +140,7 @@ int fgacfs_readlink (const char *rpath, char *buffer, size_t s)
 #define CHECK_OWN(t)                         \
     if      (pprm & FGAC_PRM_DO##t) own = 1; \
     else if (pprm & FGAC_PRM_DA##t) own = 0; \
-    else return -EACCES;
+    else return source ? 0 : -EACCES;
 
 #define ADD(addf,rmf)                            \
     if (own)                                     \
@@ -708,8 +708,18 @@ int fgacfs_rename_tree (fgac_state *state, fgac_path *path, fgac_prc *prc, mv_ar
           if (!fgac_is_dir (state, &dpath) && fgac_check_prm (state, &dpath, prc, FGAC_PRM_FSX)
              ) ch_fex = 1;
 
-          if (ch_inh == 1) { fgac_set_inh (state, &dpath, a->data[i].inh & FGAC_INH_INHS); ch_inh = 2; ch = 1; }
-          if (ch_trm == 1) { fgac_set_inh (state, &dpath, a->data[i].inh & FGAC_INH_TRMS); ch_trm = 2; ch = 1; }
+          if (ch_inh == 1) 
+          {
+              uint64_t inh = 0;
+              fgac_get_inh (state, &dpath, &inh); 
+              fgac_set_inh (state, &dpath, inh | (a->data[i].inh & FGAC_INH_INHS)); ch_inh = 2; ch = 1; 
+          }
+          if (ch_trm == 1)
+          {
+              uint64_t inh = 0;
+              fgac_get_inh (state, &dpath, &inh); 
+              fgac_set_inh (state, &dpath, inh | (a->data[i].inh & FGAC_INH_TRMS)); ch_trm = 2; ch = 1; 
+          }
           
           if (ch_prm == 1)
           {
@@ -749,9 +759,16 @@ int fgacfs_rename_tree (fgac_state *state, fgac_path *path, fgac_prc *prc, mv_ar
     
 }
 
+#define CHECK_CRT(t)                                                   \
+    {                                                                  \
+        if (!fgac_check_prm (state, newparent, prc, FGAC_PRM_DO##t) && \
+            !fgac_check_prm (state, newparent, prc, FGAC_PRM_DA##t)    \
+           ) return -EACCES;                                           \
+    }
+
 int fgacfs_rename (const char *rpath, const char *newrpath)
 {
-//    struct stat *stat;
+    struct stat *stat;
     fgac_path fgacnewpath = fgac_path_init((char *) newrpath), *newpath = &fgacnewpath;
     char newpbuffer[FGAC_LIMIT_PATH], 
          dirn[FGAC_LIMIT_PATH], newdirn[FGAC_LIMIT_PATH];
@@ -791,7 +808,23 @@ int fgacfs_rename (const char *rpath, const char *newrpath)
     printf ("rename allowed\n");    
 #endif    
 
-//    stat = fgac_stat(state, path, prc);
+    stat = fgac_prestat(state, path);
+    if (S_ISREG(stat->st_mode))
+        CHECK_CRT(F)
+    else if (S_ISCHR(stat->st_mode))
+        CHECK_CRT(C)
+    else if (S_ISBLK(stat->st_mode))
+        CHECK_CRT(B)
+    else if (S_ISFIFO(stat->st_mode))
+        CHECK_CRT(P)
+    else if (S_ISSOCK(stat->st_mode))
+        CHECK_CRT(S)
+    else if (S_ISDIR(stat->st_mode))
+        CHECK_CRT(D)
+    else if (S_ISLNK(stat->st_mode))
+        CHECK_CRT(L)
+    else return -EACCES;
+
 
     mv_array a;
     
