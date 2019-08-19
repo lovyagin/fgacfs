@@ -667,7 +667,8 @@ int fgacfs_rename_tree (fgac_state *state, fgac_path *path, fgac_prc *prc, mv_ar
         
 
         do
-        {          
+        {      
+          ch = 0;    
           if (ch_inh != 2 &&  
               (fgac_is_dir (state, &dpath) ? fgac_check_prm (state, &dpath, prc, FGAC_PRM_DCI) : fgac_check_prm (state, &dpath, prc, FGAC_PRM_FCI))
              ) ch_inh = 1;
@@ -678,7 +679,7 @@ int fgacfs_rename_tree (fgac_state *state, fgac_path *path, fgac_prc *prc, mv_ar
           
           if (ch_prm != 2 &&  
               (fgac_is_dir (state, &dpath) ? fgac_check_prm (state, &dpath, prc, FGAC_PRM_DCP) : fgac_check_prm (state, &dpath, prc, FGAC_PRM_FCP))
-             ) ch_inh = 1;
+             ) ch_prm = 1;
           
           if (!fgac_is_dir (state, &dpath) && fgac_check_prm (state, &dpath, prc, FGAC_PRM_FSX)
              ) ch_fex = 1;
@@ -702,7 +703,7 @@ int fgacfs_rename_tree (fgac_state *state, fgac_path *path, fgac_prc *prc, mv_ar
           
           if (ch_prm != 2 &&  
               (fgac_is_dir (state, &dpath) ? fgac_check_prm (state, &dpath, prc, FGAC_PRM_DCP) : fgac_check_prm (state, &dpath, prc, FGAC_PRM_FCP))
-             ) ch_inh = 1;
+             ) ch_prm = 1;
           
           if (!fgac_is_dir (state, &dpath) && fgac_check_prm (state, &dpath, prc, FGAC_PRM_FSX)
              ) ch_fex = 1;
@@ -805,7 +806,7 @@ int fgacfs_rename (const char *rpath, const char *newrpath)
 
     FGACFS_FAILCALL (rename(hostpath, newhostpath))
     
-    rc = fgacfs_rename_tree (state, path, prc, &a, rpath, newhostpath);
+    rc = fgacfs_rename_tree (state, path, prc, &a, rpath, newrpath);
     free_mv_tree(&a);
     return rc;
 }
